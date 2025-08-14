@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const attendanceController = require("../controllers/attendanceController");
+const { getAttendanceByWeek } = require("../controllers/attendanceController");
 
-router.get("/:studentId/attendance", attendanceController.getAttendanceByWeek);
+router.get("/:studentId/attendance", getAttendanceByWeek);
 
 module.exports = router;
