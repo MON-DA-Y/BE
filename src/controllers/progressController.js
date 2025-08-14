@@ -1,4 +1,4 @@
-//출석 더미데이터
+//진도 더미데이터
 const dummyProgress = {
   // studentId
   1: {
