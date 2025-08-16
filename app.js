@@ -6,6 +6,7 @@ const connectDB = require("./src/config/db");
 
 const app = express();
 const attendanceRouter = require("./src/routes/attendanceRouter");
+const progressRouter = require("./src/routes/progressRouter");
 
 app.use(
   cors({
@@ -22,8 +23,10 @@ app.get("/", (req, res) => {
   res.send("백엔드 시작!");
 });
 
-// 출석률 조회 라우터
+// 출석률 조회
 app.use("/api/users", attendanceRouter);
+// 진도 현황 조회
+app.use("/api/users", progressRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
