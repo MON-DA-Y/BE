@@ -7,6 +7,7 @@ const connectDB = require("./src/config/db");
 const app = express();
 const attendanceRouter = require("./src/routes/attendanceRouter");
 const progressRouter = require("./src/routes/progressRouter");
+const weaknessRouter = require("./src/routes/weaknessRouter");
 
 app.use(
   cors({
@@ -27,6 +28,8 @@ app.get("/", (req, res) => {
 app.use("/api/users", attendanceRouter);
 // 진도 현황 조회
 app.use("/api/users", progressRouter);
+// 약점 분석 조회
+app.use("/api/users", weaknessRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
