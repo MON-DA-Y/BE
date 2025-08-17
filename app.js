@@ -8,6 +8,7 @@ const app = express();
 const attendanceRouter = require("./src/routes/attendanceRouter");
 const progressRouter = require("./src/routes/progressRouter");
 const weaknessRouter = require("./src/routes/weaknessRouter");
+const quizResultRouter = require("./src/routes/quizResultRouter");
 
 app.use(
   cors({
@@ -30,6 +31,8 @@ app.use("/api/users", attendanceRouter);
 app.use("/api/users", progressRouter);
 // 약점 분석 조회
 app.use("/api/users", weaknessRouter);
+// 퀴즈 성적 조회
+app.use("/api/users", quizResultRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
