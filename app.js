@@ -11,6 +11,7 @@ const weaknessRouter = require("./src/routes/weaknessRouter");
 const quizResultRouter = require("./src/routes/quizResultRouter");
 const wordHistoryRouter = require("./src/routes/wordHistoryRouter");
 const newsHistoryRouter = require("./src/routes/newsHistoryRouter");
+const seriesHistoryRouter = require("./src/routes/seriesHistoryRouter");
 
 app.use(
   cors({
@@ -39,6 +40,8 @@ app.use("/api/users", quizResultRouter);
 app.use("/api/users", wordHistoryRouter);
 // 뉴스 히스토리 조회
 app.use("/api/users", newsHistoryRouter);
+// 시리즈 히스토리 조회
+app.use("/api/users", seriesHistoryRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
