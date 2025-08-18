@@ -9,6 +9,7 @@ const attendanceRouter = require("./src/routes/attendanceRouter");
 const progressRouter = require("./src/routes/progressRouter");
 const weaknessRouter = require("./src/routes/weaknessRouter");
 const quizResultRouter = require("./src/routes/quizResultRouter");
+const wordHistoryRouter = require("./src/routes/wordHistoryRouter");
 
 app.use(
   cors({
@@ -33,6 +34,8 @@ app.use("/api/users", progressRouter);
 app.use("/api/users", weaknessRouter);
 // 퀴즈 성적 조회
 app.use("/api/users", quizResultRouter);
+// 단어 히스토리 조회
+app.use("/api/users", wordHistoryRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
