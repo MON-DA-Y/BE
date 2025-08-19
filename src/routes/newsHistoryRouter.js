@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getNewsByWeek } = require("../controllers/newsHistoryController");
+const { getNewsByWeek } = require("../controllers/NewsHistoryController");
 
 router.get("/:studentId/history/news", getNewsByWeek);
 

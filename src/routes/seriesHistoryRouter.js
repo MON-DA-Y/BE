@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { getSeriesByWeek } = require("../controllers/seriesHistoryController");
+const { getSeriesByWeek } = require("../controllers/SeriesHistoryController");
 
 router.get("/:studentId/history/series", getSeriesByWeek);
 

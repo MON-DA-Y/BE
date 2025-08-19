@@ -5,13 +5,13 @@ const cors = require("cors");
 const connectDB = require("./src/config/db");
 
 const app = express();
-const attendanceRouter = require("./src/routes/attendanceRouter");
-const progressRouter = require("./src/routes/progressRouter");
-const weaknessRouter = require("./src/routes/weaknessRouter");
-const quizResultRouter = require("./src/routes/quizResultRouter");
-const wordHistoryRouter = require("./src/routes/wordHistoryRouter");
-const newsHistoryRouter = require("./src/routes/newsHistoryRouter");
-const seriesHistoryRouter = require("./src/routes/seriesHistoryRouter");
+const attendanceRouter = require("./src/routes/AttendanceRouter");
+const progressRouter = require("./src/routes/ProgressRouter");
+const weaknessRouter = require("./src/routes/WeaknessRouter");
+const quizResultRouter = require("./src/routes/QuizResultRouter");
+const wordHistoryRouter = require("./src/routes/WordHistoryRouter");
+const newsHistoryRouter = require("./src/routes/NewsHistoryRouter");
+const seriesHistoryRouter = require("./src/routes/SeriesHistoryRouter");
 
 app.use(
   cors({
