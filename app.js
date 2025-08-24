@@ -5,19 +5,23 @@ const cors = require("cors");
 const connectDB = require("./src/config/db");
 
 const app = express();
-const attendanceRouter = require("./src/routes/AttendanceRouter");
-const progressRouter = require("./src/routes/ProgressRouter");
-const weaknessRouter = require("./src/routes/WeaknessRouter");
-const quizResultRouter = require("./src/routes/QuizResultRouter");
-const wordHistoryRouter = require("./src/routes/WordHistoryRouter");
-const newsHistoryRouter = require("./src/routes/NewsHistoryRouter");
-const seriesHistoryRouter = require("./src/routes/SeriesHistoryRouter");
+const attendanceRouter = require("./src/routes/attendanceRouter");
+const progressRouter = require("./src/routes/progressRouter");
+const weaknessRouter = require("./src/routes/weaknessRouter");
+const quizResultRouter = require("./src/routes/quizResultRouter");
+const wordHistoryRouter = require("./src/routes/wordHistoryRouter");
+const newsHistoryRouter = require("./src/routes/newsHistoryRouter");
+const seriesHistoryRouter = require("./src/routes/seriesHistoryRouter");
+const monNewsRouter = require("./src/routes/monNewsRouter");
 
-app.use(
-  cors({
-    origin: "http://localhost:3000", // 프론트 포트
-  })
-); // 다른 도메인 요청 허용
+const corsOptions = {
+  origin: "http://localhost:3000", // 프론트엔드 주소
+  method: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // 허용 HTTP 메서드
+  allowedHeaders: ["Content-Type", "Authorization"], // 허용 헤더
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // 모든 라우트의 preflight 요청 허용
 app.use(express.json()); // JSON 형식 body 파싱
 
 // DB 연결 불러오기
@@ -42,6 +46,8 @@ app.use("/api/users", wordHistoryRouter);
 app.use("/api/users", newsHistoryRouter);
 // 시리즈 히스토리 조회
 app.use("/api/users", seriesHistoryRouter);
+// monNews
+app.use("/api", monNewsRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

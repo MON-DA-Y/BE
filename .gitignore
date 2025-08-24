@@ -119,3 +119,7 @@ dist
 
 #보안관련
 package-lock.json
+
+node_modules
+
+.env
