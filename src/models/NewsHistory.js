@@ -8,7 +8,7 @@ const newsSchema = new mongoose.Schema({
       category: { type: String, required: true },
       title: { type: String, required: true },
       imgUrl: { type: String, default: null },
-      learnedAt: { type: Date, required: true },
+      learningDate: { type: Date, required: true },
       isCorrect: { type: Boolean, required: true },
     },
   ],

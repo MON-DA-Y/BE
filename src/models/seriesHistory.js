@@ -9,6 +9,7 @@ const seriesSchema = new mongoose.Schema({
       sub_title: { type: String, required: true },
       keyword: { type: String, required: true },
       status: { type: String, required: true },
+      learningDate: { type: Date, required: true },
       totalCount: { type: Number, required: true },
       learnedCount: { type: Number, required: true },
       imgUrl: { type: String, required: true },

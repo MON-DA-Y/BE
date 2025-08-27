@@ -1,79 +1,27 @@
-//진도 더미데이터
-const dummyProgress = {
-  // studentId
-  1: {
-    // week
-    3: {
-      weekCompletionRate: 80,
-      strikeDay: 3,
-      days: [
-        {
-          day: "2025-07-31",
-          tasks: {
-            word: "done",
-            news: "done",
-            series: "done",
-            quiz: "done",
-          },
-        },
-        {
-          day: "2025-08-01",
-          tasks: {
-            word: "done",
-            news: "done",
-            series: "ongoing",
-            quiz: "pending",
-          },
-        },
-        {
-          day: "2025-08-02",
-          tasks: {
-            word: "done",
-            news: "ongoing",
-            series: "pending",
-            quiz: "pending",
-          },
-        },
-      ],
-    },
-  },
-  2: {
-    3: {
-      weekCompletionRate: 50,
-      strikeDay: 1,
-      days: [
-        {
-          day: "2025-04-14",
-          tasks: {
-            word: "done",
-            news: "done",
-            series: "ongoing",
-            quiz: "pending",
-          },
-        },
-      ],
-    },
-  },
-};
+const { getStudentIdFromToken } = require("../auth/token");
+const Progress = require("../models/progress");
+const { getWeekRange } = require("../utils/week");
 
-exports.getProgressByWeek = (req, res) => {
-  const { studentId } = req.params;
-  const { week } = req.query;
+exports.getProgressByWeek = async (req, res) => {
+  const studentId = getStudentIdFromToken(req) || 123;
+  const weekQuery = req.query.week;
 
-  if (!week) {
-    return res.status(400).json({ message: "해당 주차를 선택해주세요." });
+  try {
+    const progress = await Progress.findOne({ studentId });
+    if (!progress) return res.status(404).json({ message: "해당 학생의 진도 데이터가 없습니다." });
+
+    const { weekStart, weekEnd } = getWeekRange({ weekNumber: weekQuery });
+
+    const progressInWeek = progress.days.filter((n) => {
+      const progressDate = new Date(n.day);
+      return progressDate >= weekStart && progressDate <= weekEnd;
+    });
+
+    progressInWeek.sort((a, b) => new Date(a.day) - new Date(b.day));
+
+    res.json({ days: progressInWeek });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버 오류" });
   }
-
-  const progress = dummyProgress[studentId]?.[week];
-
-  if (!progress) {
-    return res.status(404).json({ message: "해당 데이터가 없습니다." });
-  }
-
-  res.json({
-    week: parseInt(week, 10),
-    weekCompletionRate: progress.weekCompletionRate,
-    strikeDay: progress.strikeDay,
-    days: progress.days,
-  });
 };

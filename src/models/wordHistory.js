@@ -9,6 +9,7 @@ const wordSchema = new mongoose.Schema({
       word: { type: String, required: true },
       explain: { type: String, required: true },
       use: { type: String, required: true },
+      learningDate: { type: Date, required: true },
       isCorrect: { type: Boolean, required: true },
     },
   ],
