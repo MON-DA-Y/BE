@@ -1,54 +1,49 @@
-//출석 더미데이터
-const dummyAttendance = {
-  //studentId
-  1: {
-    //week
-    3: [
-      { day: "2025-07-31", isAttended: true },
-      { day: "2025-08-01", isAttended: false },
-      { day: "2025-08-02", isAttended: true },
-    ],
-  },
-  2: {
-    3: [
-      { day: "2025-04-14", isAttended: false },
-      { day: "2025-04-15", isAttended: true },
-    ],
-  },
+const { getStudentIdFromToken } = require("../auth/token");
+const Attendance = require("../models/attendance");
+const { getWeekRange } = require("../utils/week");
+
+// 오늘 출석 처리
+exports.todayAttendance = async (req, res) => {
+  const studentId = getStudentIdFromToken(req) || 123;
+
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    let attendance = await Attendance.findOne({ studentId });
+    if (!attendance) attendance = new Attendance({ studentId, days: [] });
+
+    const existingDay = attendance.days.find((d) => d.day === today);
+    if (existingDay) existingDay.isAttended = true;
+    else attendance.days.push({ day: today, isAttended: true });
+
+    await attendance.save();
+    res.json({ message: "오늘 출석 완료!", day: today });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "출석 처리 중 오류 발생" });
+  }
 };
 
-// 주차 시작일 계산 함수
-function getWeekStartDate(year, weekNumber) {
-  const augustFirst = new Date(year, 7, 1); // 더미데이터에 맞게 8월 1일부터 시작하게 설정
-  // 3주차 시작일
-  const weekStart = new Date(augustFirst);
-  weekStart.setDate(augustFirst.getDate() + (weekNumber - 1) * 7);
-  return augustFirst;
-}
+// 특정 주차 출석 조회
+exports.getAttendanceByWeek = async (req, res) => {
+  const studentId = getStudentIdFromToken(req) || 123;
+  const weekQuery = req.query.week;
 
-exports.getAttendanceByWeek = (req, res) => {
-  const { studentId } = req.params;
-  const { week } = req.query;
+  try {
+    const attendance = await Attendance.findOne({ studentId });
+    if (!attendance) return res.json({ days: [] });
 
-  if (!week) {
-    return res.status(400).json({ message: "해당 주차를 선택해주세요." });
+    const { weekStart, weekEnd } = getWeekRange({ weekNumber: weekQuery });
+
+    const daysInWeek = [];
+    for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
+      const isoDay = d.toISOString().split("T")[0];
+      const found = attendance.days.find((a) => a.day === isoDay);
+      daysInWeek.push(found || { day: isoDay, isAttended: false });
+    }
+
+    res.json({ days: daysInWeek });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "출석 조회 중 오류 발생" });
   }
-
-  const attendance = dummyAttendance[studentId]?.[week] || [];
-  // 주차 시작일 계산
-  const weekStart = getWeekStartDate(2025, parseInt(week, 10));
-
-  // 7일 동안 없는 날은 자동으로 isAttended: false
-  const daysInWeek = Array.from({ length: 7 }, (_, i) => {
-    const day = new Date(weekStart);
-    day.setDate(weekStart.getDate() + i);
-    const isoDay = day.toISOString().split("T")[0];
-    const found = attendance.find((a) => a.day === isoDay);
-    return found || { day: isoDay, isAttended: false };
-  });
-
-  res.json({
-    week: parseInt(week, 10),
-    days: daysInWeek,
-  });
 };

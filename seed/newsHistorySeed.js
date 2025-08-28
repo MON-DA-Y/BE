@@ -1,9 +1,9 @@
 require("dotenv").config();
 const mysql = require("mysql2/promise");
 const connectDB = require("../src/config/db");
-const News = require("../src/models/NewsHistory");
+const NewsHistory = require("../src/models/newsHistory");
 
-const seedNews = async () => {
+const newsHistorySeed = async () => {
   try {
     // 1. MongoDB 연결
     await connectDB();
@@ -21,14 +21,14 @@ const seedNews = async () => {
 
     // 3. 필요한 데이터 쿼리
     const [rows] = await connection.execute(`
-      SELECT oa_id AS newsId, title, img_url AS imgUrl, write_date AS learnedAt
+      SELECT oa_id AS newsId, title, img_url AS imgUrl, write_date AS learningDate
       FROM org_article_tb
       LIMIT 100
     `);
     console.log("MySQL에서 가져온 데이터:", rows);
 
     // 4. MongoDB용으로 변환
-    const newsData = rows.map((row) => ({
+    const newsHistoryData = rows.map((row) => ({
       studentId: 1, // 필요시 수정
       newsList: [
         {
@@ -36,16 +36,16 @@ const seedNews = async () => {
           title: row.title,
           imgUrl: row.imgUrl,
           category: "UNKNOWN",
-          learnedAt: new Date(row.learnedAt),
+          learningDate: new Date(row.learningDate),
           isCorrect: true, // 예시, 필요시 로직 수정
         },
       ],
     }));
-    console.log("MongoDB로 들어갈 데이터:", JSON.stringify(newsData, null, 2));
+    console.log("MongoDB로 들어갈 데이터:", JSON.stringify(newsHistoryData, null, 2));
 
     // 5. MongoDB에 저장
-    await News.deleteMany();
-    await News.insertMany(newsData);
+    await NewsHistory.deleteMany();
+    await NewsHistory.insertMany(newsHistoryData);
 
     console.log("MongoDB 뉴스 데이터 삽입 완료!");
     process.exit();
@@ -55,4 +55,4 @@ const seedNews = async () => {
   }
 };
 
-seedNews();
+newsHistorySeed();
