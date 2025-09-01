@@ -4,7 +4,7 @@ const weaknessSchema = new mongoose.Schema({
   studentId: { type: Number, required: true },
   weakWord: [
     {
-      week: { type: Number, required: true },
+      date: { type: Date, required: true }, // 해당 주의 시작일
       categories: [
         {
           category: { type: String, required: true },
