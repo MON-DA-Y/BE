@@ -1,31 +1,25 @@
-// 주차 계산
-function getWeekRange({ weekNumber, referenceYear = new Date().getFullYear() } = {}) {
-  let weekStart, weekEnd;
+// utils/week.js
+exports.getWeekRange = (weekQuery) => {
+  const today = new Date();
+  let start, end;
 
-  if (weekNumber) {
-    // 선택된 주차 계산
-    const firstDayOfYear = new Date(referenceYear, 0, 1);
-    const daysOffset = (parseInt(weekNumber, 10) - 1) * 7;
-    const start = new Date(firstDayOfYear);
-    start.setDate(firstDayOfYear.getDate() + daysOffset);
-
-    const dayOfWeek = start.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // 월요일 기준
-    weekStart = new Date(start);
-    weekStart.setDate(start.getDate() + mondayOffset);
-  } else {
-    // 기본: 이번 주
-    const today = new Date();
+  if (weekQuery === "이번주") {
+    const dayOfWeek = today.getDay(); // 0: 일요일
+    start = new Date(today);
+    start.setDate(today.getDate() - dayOfWeek + 1); // 월요일 시작
+    end = new Date(start);
+    end.setDate(start.getDate() + 6);
+  } else if (weekQuery === "저번주") {
     const dayOfWeek = today.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    weekStart = new Date(today);
-    weekStart.setDate(today.getDate() + mondayOffset);
+    end = new Date(today);
+    end.setDate(today.getDate() - dayOfWeek); // 지난 일요일
+    start = new Date(end);
+    start.setDate(end.getDate() - 6);
+  } else {
+    // fallback 안전 처리
+    start = new Date(today);
+    end = new Date(today);
   }
 
-  weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 6);
-
-  return { weekStart, weekEnd };
-}
-
-module.exports = { getWeekRange };
+  return { weekStart: start, weekEnd: end };
+};

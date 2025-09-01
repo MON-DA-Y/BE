@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { getWordByWeek } = require("../controllers/wordHistoryController");
+const { getWordHistory } = require("../controllers/wordHistoryController");
 
-router.get("/:studentId/history/word", getWordByWeek);
+router.get("/:studentId/history/word", getWordHistory);
 
 module.exports = router;
