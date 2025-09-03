@@ -21,8 +21,14 @@ const newsHistorySeed = async () => {
 
     // 3. 필요한 데이터 쿼리
     const [rows] = await connection.execute(`
-      SELECT oa_id AS newsId, title, img_url AS imgUrl, write_date AS learningDate
-      FROM org_article_tb
+      SELECT 
+        m.oa_id AS newsId,
+        m.title,
+        o.category
+        o.img_url AS imgUrl
+      FROM mon_news m
+      LEFT JOIN org_article_tb o
+        ON m.oa_id = o.oa_id
       LIMIT 100
     `);
     console.log("MySQL에서 가져온 데이터:", rows);
@@ -35,7 +41,7 @@ const newsHistorySeed = async () => {
           newsId: row.newsId,
           title: row.title,
           imgUrl: row.imgUrl,
-          category: "UNKNOWN",
+          category: row.category,
           learningDate: new Date(row.learningDate),
           isCorrect: true, // 예시, 필요시 로직 수정
         },
@@ -47,7 +53,7 @@ const newsHistorySeed = async () => {
     await NewsHistory.deleteMany();
     await NewsHistory.insertMany(newsHistoryData);
 
-    console.log("MongoDB 뉴스 데이터 삽입 완료!");
+    console.log("MongoDB 뉴스 히스토리 데이터 삽입 완료!");
     process.exit();
   } catch (err) {
     console.error(err);
