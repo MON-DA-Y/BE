@@ -34,7 +34,7 @@ exports.getTodayMonNews = (req, res) => {
   const today = new Date().toISOString().split("T")[0];
 
   const news = dummyMonNews.find(
-    (item) => item.studentId === studentId && item.learningDate === today
+    (item) => item.studentId === studentId && item.createdAt === today
   );
 
   if (!news) {
