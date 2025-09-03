@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const newsSchema = new mongoose.Schema({
+const newsHistorySchema = new mongoose.Schema({
   studentId: { type: Number, required: true },
   newsList: [
     {
@@ -14,4 +14,4 @@ const newsSchema = new mongoose.Schema({
   ],
 });
 
-module.exports = mongoose.model("NewsHistory", newsSchema);
+module.exports = mongoose.model("NewsHistory", newsHistorySchema);
