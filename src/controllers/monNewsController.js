@@ -56,6 +56,6 @@ exports.postTodayMonNewsDone = (req, res) => {
   const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
   const today = new Date().toISOString().split("T")[0];
 
-  console.log(`학생 ${studentId}의 ${today} 뉴스 학습 완료!`);
+  // console.log(`학생 ${studentId}의 ${today} 뉴스 학습 완료!`);
   res.json({ message: "오늘 Mon 뉴스 학습 완료!" });
 };
