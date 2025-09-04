@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const seriesSchema = new mongoose.Schema({
+const seriesHistorySchema = new mongoose.Schema({
   studentId: { type: Number, required: true },
   seriesList: [
     {
@@ -25,4 +25,4 @@ const seriesSchema = new mongoose.Schema({
   ],
 });
 
-module.exports = mongoose.model("SeriesHistory", seriesSchema);
+module.exports = mongoose.model("SeriesHistory", seriesHistorySchema);
