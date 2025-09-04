@@ -96,7 +96,7 @@ exports.postWordItemUnderstand = (req, res) => {
   // understand true로 변경
   wordItem.understand = true;
 
-  res.json({ message: "단어 학습 완료!", word: wordItem });
+  res.json({ message: "단어 학습 완료!", result: wordItem });
 };
 
 // [post] 오늘의 monWord 완료
