@@ -10,7 +10,7 @@ const {
 router.get("/monWord", getTodayMonWord);
 
 // 오늘 mon단어 item 이해했어요
-router.get("/monWord/understand", postWordItemUnderstand);
+router.post("/monWord/understand", postWordItemUnderstand);
 
 // 오늘 mon단어 학습 완료
 router.post("/monWord/done", postTodayMonWordDone);
