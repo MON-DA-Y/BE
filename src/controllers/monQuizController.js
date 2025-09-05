@@ -48,7 +48,7 @@ const getStudentIdFromToken = (req) => {
 };
 
 // [get] 오늘의 monQuiz 조회
-exports.getTodayMonWord = (req, res) => {
+exports.getTodayMonQuiz = (req, res) => {
   const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
   const today = new Date().toISOString().split("T")[0];
 
