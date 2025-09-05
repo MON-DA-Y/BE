@@ -32,7 +32,7 @@ const DummySeriesHistory = {
 };
 
 exports.getSeriesHistory = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123;
+  const studentId = getStudentIdFromToken(req) || 1;
   const weekQuery = req.query.week;
 
   try {

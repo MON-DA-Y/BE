@@ -1,31 +1,13 @@
 const { getStudentIdFromToken } = require("../auth/token");
-//const NewsHistory = require("../models/newsHistory");
+const NewsHistory = require("../models/newsHistory");
 const { getWeekRange } = require("../utils/week");
 
-const DummyNewsHistory = {
-  findOne: async ({ studentId }) => {
-    return {
-      studentId,
-      newsList: [
-        {
-          newsId: 1,
-          category: "MONEY",
-          title: "제목",
-          imgUrl: "",
-          learningDate: "2025-09-05",
-          isCorrect: true,
-        },
-      ],
-    };
-  },
-};
-
 exports.getNewsHistory = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123;
+  const studentId = Number(req.params.studentId) || getStudentIdFromToken(req);
   const weekQuery = req.query.week;
 
   try {
-    const newsData = await DummyNewsHistory.findOne({ studentId });
+    const newsData = await NewsHistory.findOne({ studentId });
     if (!newsData) return res.status(404).json({ message: "해당 학생의 뉴스 데이터가 없습니다." });
 
     function formatKSTDate(date) {

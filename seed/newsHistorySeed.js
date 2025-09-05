@@ -24,12 +24,12 @@ const newsHistorySeed = async () => {
       SELECT 
         m.oa_id AS newsId,
         m.title,
-        o.category
+        o.category,
         o.img_url AS imgUrl
       FROM mon_news m
       LEFT JOIN org_article_tb o
         ON m.oa_id = o.oa_id
-      LIMIT 100
+      LIMIT 100 OFFSET 0
     `);
     console.log("MySQL에서 가져온 데이터:", rows);
 
@@ -42,8 +42,8 @@ const newsHistorySeed = async () => {
           title: row.title,
           imgUrl: row.imgUrl,
           category: row.category,
-          learningDate: new Date(row.learningDate),
-          isCorrect: true, // 예시, 필요시 로직 수정
+          learningDate: new Date("2025-09-05"), // 현재 날짜로 임시 지정
+          isCorrect: null, // 아직 채점 전
         },
       ],
     }));
