@@ -14,6 +14,7 @@ const newsHistoryRouter = require("./src/routes/newsHistoryRouter");
 const seriesHistoryRouter = require("./src/routes/seriesHistoryRouter");
 const monNewsRouter = require("./src/routes/monNewsRouter");
 const monWordRouter = require("./src/routes/monWordRouter");
+const monQuizRouter = require("./src/routes/monQuizRouter");
 
 const corsOptions = {
   origin: "http://localhost:3000", // 프론트엔드 주소
@@ -51,6 +52,8 @@ app.use("/api/users", seriesHistoryRouter);
 app.use("/api", monNewsRouter);
 // monWord
 app.use("/api", monWordRouter);
+// monQuiz
+app.use("/api", monQuizRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
