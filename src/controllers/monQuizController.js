@@ -75,3 +75,45 @@ exports.getTodayMonQuiz = (req, res) => {
     result: responseQuizzes,
   });
 };
+
+// [post] 오늘의 MonQuiz 제출
+exports.postMonQuizSubmit = (req, res) => {
+  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
+  const today = new Date().toISOString().split("T")[0];
+
+  // 오늘 데이터 찾기
+  const todayData = dummyMonQuiz.find(
+    (item) => item.studentId === studentId && item.createdAt === today
+  );
+
+  if (!todayData) {
+    return res.status(404).json({ message: "오늘 퀴즈가 없습니다." });
+  }
+
+  const { selectedAnswers } = req.body;
+
+  if (!selectedAnswers || Object.keys(selectedAnswers).length === 0) {
+    return res.status(400).json({ message: "선택한 답이 없습니다." });
+  }
+
+  // 선택한 답을 todayData에 반영
+  todayData.quizzes.forEach((quiz) => {
+    const selected = selectedAnswers[quiz.id];
+    if (selected) {
+      quiz.selectedAnswer = selected;
+      quiz.isCorrect = quiz.answer === selected;
+    }
+  });
+
+  res.json({
+    message: "오늘 Mon 퀴즈 제출 완료!",
+    result: todayData.quizzes.map(
+      ({ id, isCorrect, selectedAnswer, marking }) => ({
+        id,
+        isCorrect,
+        selectedAnswer,
+        marking,
+      })
+    ),
+  });
+};
