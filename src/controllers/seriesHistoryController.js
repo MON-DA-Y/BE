@@ -13,7 +13,7 @@ const DummySeriesHistory = {
           sub_title: "시리즈 부제목",
           keyword: "시리즈 부제목",
           status: "ongoing",
-          learningDate: "2025-09-05",
+          learningDate: "2025-09-09",
           totalCount: 10,
           learnedCount: 7,
           imgUrl: "",
@@ -40,18 +40,11 @@ exports.getSeriesHistory = async (req, res) => {
     if (!seriesData)
       return res.status(404).json({ message: "해당 학생의 시리즈 데이터가 없습니다." });
 
-    function formatKSTDate(date) {
-      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-        date.getDate()
-      ).padStart(2, "0")}`;
-    }
-
     const { weekStart, weekEnd } = getWeekRange(weekQuery);
-    const startStr = formatKSTDate(weekStart);
-    const endStr = formatKSTDate(weekEnd);
 
     const seriesHistory = seriesData.seriesList.filter((r) => {
-      return r.learningDate >= startStr && r.learningDate <= endStr;
+      const date = new Date(r.learningDate);
+      return date >= weekStart && date <= weekEnd;
     });
 
     res.json({ seriesList: seriesHistory });

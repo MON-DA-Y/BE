@@ -29,23 +29,21 @@ const monNewsSeed = async () => {
       LIMIT 100
   `);
 
-    const newsData = rows.map((row) => ({
+    const newsData = {
       studentId: 1, // 필요시 수정
-      newsList: [
-        {
-          newsId: row.newsId,
-          learningDate: row.input_at ? new Date(row.input_at) : new Date(),
-          title: row.title,
-          imgUrl: row.imgUrl,
-          body: row.body,
-          summary: row.summary,
-          createdAt: row.input_at,
-        },
-      ],
-    }));
+      newsList: rows.map((row) => ({
+        newsId: row.newsId,
+        learningDate: row.input_at ? new Date(row.input_at) : new Date(),
+        title: row.title,
+        imgUrl: row.imgUrl,
+        body: row.body,
+        summary: row.summary,
+        createdAt: row.input_at,
+      })),
+    };
 
     // MongoDB에 저장
-    await News.deleteMany();
+    await News.deleteMany({ studentId: 1 });
     await News.insertMany(newsData);
 
     console.log("MongoDB 뉴스 데이터 삽입 완료!");

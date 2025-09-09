@@ -34,23 +34,21 @@ const newsHistorySeed = async () => {
     console.log("MySQL에서 가져온 데이터:", rows);
 
     // 4. MongoDB용으로 변환
-    const newsHistoryData = rows.map((row) => ({
+    const newsHistoryData = {
       studentId: 1, // 필요시 수정
-      newsList: [
-        {
-          newsId: row.newsId,
-          title: row.title,
-          imgUrl: row.imgUrl,
-          category: row.category,
-          learningDate: new Date("2025-09-05"), // 현재 날짜로 임시 지정
-          isCorrect: null, // 아직 채점 전
-        },
-      ],
-    }));
+      newsList: rows.map((row) => ({
+        newsId: row.newsId,
+        title: row.title,
+        imgUrl: row.imgUrl,
+        category: row.category,
+        learningDate: "2025-09-09", // 현재 날짜로 임시 지정
+        isCorrect: null, // 아직 채점 전
+      })),
+    };
     console.log("MongoDB로 들어갈 데이터:", JSON.stringify(newsHistoryData, null, 2));
 
     // 5. MongoDB에 저장
-    await NewsHistory.deleteMany();
+    await NewsHistory.deleteMany({ studentId: 1 });
     await NewsHistory.insertMany(newsHistoryData);
 
     console.log("MongoDB 뉴스 히스토리 데이터 삽입 완료!");

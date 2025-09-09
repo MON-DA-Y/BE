@@ -9,17 +9,17 @@ const DummyQuizResult = {
       results: [
         {
           quizId: "quiz-001",
-          day: "2025-09-01",
+          day: "2025-09-08",
           score: 80,
         },
         {
           quizId: "quiz-002",
-          day: "2025-09-02",
+          day: "2025-09-09",
           score: 60,
         },
         {
           quizId: "quiz-003",
-          day: "2025-09-03",
+          day: "2025-09-10",
           score: 90,
         },
       ],
@@ -28,7 +28,7 @@ const DummyQuizResult = {
 };
 
 exports.getQuizResultByWeek = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 1;
+  const studentId = getStudentIdFromToken(req) || 123;
   const weekQuery = req.query.week;
 
   try {
