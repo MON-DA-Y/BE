@@ -1,26 +1,53 @@
 const { getStudentIdFromToken } = require("../auth/token");
-const SeriesHistory = require("../models/seriesHistory");
+//const SeriesHistory = require("../models/seriesHistory");
 const { getWeekRange } = require("../utils/week");
 
+const DummySeriesHistory = {
+  findOne: async ({ studentId }) => {
+    return {
+      studentId,
+      seriesList: [
+        {
+          seriesId: 1,
+          title: "시리즈 제목",
+          sub_title: "시리즈 부제목",
+          keyword: "시리즈 부제목",
+          status: "ongoing",
+          learningDate: "2025-09-09",
+          totalCount: 10,
+          learnedCount: 7,
+          imgUrl: "",
+          parts: [
+            {
+              partId: 101,
+              isLearned: true,
+              part_title: "제목",
+              part_sub_title: "부제목",
+            },
+          ],
+        },
+      ],
+    };
+  },
+};
+
 exports.getSeriesHistory = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123;
+  const studentId = getStudentIdFromToken(req) || 1;
   const weekQuery = req.query.week;
 
   try {
-    const seriesData = await SeriesHistory.findOne({ studentId });
+    const seriesData = await DummySeriesHistory.findOne({ studentId });
     if (!seriesData)
       return res.status(404).json({ message: "해당 학생의 시리즈 데이터가 없습니다." });
 
-    const { weekStart, weekEnd } = getWeekRange({ weekNumber: weekQuery });
+    const { weekStart, weekEnd } = getWeekRange(weekQuery);
 
-    const filteredSeries = seriesData.seriesList
-      .filter((n) => {
-        const seriesDate = new Date(n.learningDate);
-        return seriesDate >= weekStart && seriesDate <= weekEnd;
-      })
-      .sort((a, b) => new Date(a.learningDate) - new Date(b.learningDate));
+    const seriesHistory = seriesData.seriesList.filter((r) => {
+      const date = new Date(r.learningDate);
+      return date >= weekStart && date <= weekEnd;
+    });
 
-    res.json({ seriesList: filteredSeries });
+    res.json({ seriesList: seriesHistory });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버 오류" });

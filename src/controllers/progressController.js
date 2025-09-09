@@ -3,7 +3,7 @@ const Progress = require("../models/progress");
 const { getWeekRange } = require("../utils/week");
 
 exports.getProgressByWeek = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123;
+  const studentId = getStudentIdFromToken(req) || 1;
   const weekQuery = req.query.week;
 
   try {

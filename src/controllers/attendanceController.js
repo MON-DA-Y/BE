@@ -23,7 +23,7 @@ const DummyAttendance = {
 
 // 오늘 출석 처리
 exports.todayAttendance = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123;
+  const studentId = getStudentIdFromToken(req) || 1;
 
   try {
     const today = new Date().toISOString().split("T")[0];
@@ -44,7 +44,7 @@ exports.todayAttendance = async (req, res) => {
 
 // 특정 주차 출석 조회
 exports.getAttendanceByWeek = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123;
+  const studentId = getStudentIdFromToken(req) || 1;
   const weekQuery = req.query.week; // "이번주" or "저번주"
 
   try {

@@ -5,11 +5,11 @@ const newsHistorySchema = new mongoose.Schema({
   newsList: [
     {
       newsId: { type: String, required: true },
-      category: { type: String, required: true },
+      category: { type: String, default: null },
       title: { type: String, required: true },
       imgUrl: { type: String, default: null },
       learningDate: { type: Date, required: true },
-      isCorrect: { type: Boolean, required: true },
+      isCorrect: { type: Boolean, default: null },
     },
   ],
 });
