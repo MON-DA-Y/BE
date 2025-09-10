@@ -9,6 +9,6 @@ const {
 router.get("/monQuiz", getTodayMonQuiz);
 
 // 오늘 mon퀴즈 제출
-router.get("/monQuiz/submit", postMonQuizSubmit);
+router.post("/monQuiz/submit", postMonQuizSubmit);
 
 module.exports = router;
