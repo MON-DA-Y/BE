@@ -40,7 +40,7 @@ const newsHistorySeed = async () => {
         title: row.title,
         imgUrl: row.imgUrl,
         category: row.category,
-        learningDate: "2025-09-09", // 현재 날짜로 임시 지정
+        learningDate: new Date().toISOString().split("T")[0], // 현재 날짜
         isCorrect: null, // 아직 채점 전
       })),
     };
