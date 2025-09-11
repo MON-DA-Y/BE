@@ -1,4 +1,5 @@
 const { getStudentIdFromToken } = require("../auth/token");
+const NewsHistory = require("../models/newsHistory");
 
 // 테스트용 더미 데이터
 const dummyMonNews = [
@@ -37,10 +38,31 @@ exports.getTodayMonNews = (req, res) => {
 };
 
 // [post] 오늘의 monNews 완료
-exports.postTodayMonNewsDone = (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 1; // 테스트용 디폴트
-  const today = new Date().toISOString().split("T")[0];
+exports.postTodayMonNewsDone = async (req, res) => {
+  try {
+    const studentId = getStudentIdFromToken(req) || 1; // 테스트용 디폴트
+    const today = new Date().toISOString().split("T")[0];
+    const { newsId } = req.body;
 
-  // console.log(`학생 ${studentId}의 ${today} 뉴스 학습 완료!`);
-  res.json({ message: "오늘 Mon 뉴스 학습 완료!" });
+    // 뉴스 히스토리에 학습 기록 추가
+    await NewsHistory.updateOne(
+      { studentId },
+      {
+        $push: {
+          newsList: {
+            newsId,
+            learningDate: today, // 학습 완료 날짜
+            isCorrect: null,
+          },
+        },
+      },
+      { upsert: true }
+    );
+
+    // console.log(`학생 ${studentId}의 ${today} 뉴스 학습 완료!`);
+    res.json({ message: "오늘 MON 뉴스 학습 완료!", learningDate: today });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "뉴스 학습 완료 처리 실패" });
+  }
 };
