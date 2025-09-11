@@ -31,7 +31,6 @@ const newsHistorySeed = async () => {
         ON m.oa_id = o.oa_id
       LIMIT 100 OFFSET 0
     `);
-    console.log("MySQL에서 가져온 데이터:", rows);
 
     // 4. MongoDB용으로 변환
     const newsHistoryData = {
@@ -45,7 +44,6 @@ const newsHistorySeed = async () => {
         isCorrect: null, // 아직 채점 전
       })),
     };
-    console.log("MongoDB로 들어갈 데이터:", JSON.stringify(newsHistoryData, null, 2));
 
     // 5. MongoDB에 저장
     await NewsHistory.deleteMany({ studentId: 1 });
