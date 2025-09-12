@@ -55,7 +55,7 @@ app.use("/api", monWordRouter);
 // monQuiz
 app.use("/api", monQuizRouter);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 80;
 app.listen(PORT, () => {
   console.log(`서버 시작: http://localhost:${PORT}`);
 });

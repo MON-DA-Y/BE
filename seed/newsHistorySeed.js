@@ -24,33 +24,29 @@ const newsHistorySeed = async () => {
       SELECT 
         m.oa_id AS newsId,
         m.title,
-        o.category
+        o.category,
         o.img_url AS imgUrl
       FROM mon_news m
       LEFT JOIN org_article_tb o
         ON m.oa_id = o.oa_id
-      LIMIT 100
+      LIMIT 100 OFFSET 0
     `);
-    console.log("MySQL에서 가져온 데이터:", rows);
 
     // 4. MongoDB용으로 변환
-    const newsHistoryData = rows.map((row) => ({
+    const newsHistoryData = {
       studentId: 1, // 필요시 수정
-      newsList: [
-        {
-          newsId: row.newsId,
-          title: row.title,
-          imgUrl: row.imgUrl,
-          category: row.category,
-          learningDate: new Date(row.learningDate),
-          isCorrect: true, // 예시, 필요시 로직 수정
-        },
-      ],
-    }));
-    console.log("MongoDB로 들어갈 데이터:", JSON.stringify(newsHistoryData, null, 2));
+      newsList: rows.map((row) => ({
+        newsId: row.newsId,
+        title: row.title,
+        imgUrl: row.imgUrl,
+        category: row.category,
+        learningDate: new Date().toISOString().split("T")[0], // 현재 날짜
+        isCorrect: null, // 아직 채점 전
+      })),
+    };
 
     // 5. MongoDB에 저장
-    await NewsHistory.deleteMany();
+    await NewsHistory.deleteMany({ studentId: 1 });
     await NewsHistory.insertMany(newsHistoryData);
 
     console.log("MongoDB 뉴스 히스토리 데이터 삽입 완료!");
