@@ -23,41 +23,60 @@ const seriesHistorySeed = async () => {
     const [rows] = await connection.execute(`
       SELECT 
         m.ms_id AS seriesId,
-        m.title AS title,
+        m.title AS seriesTitle,
+        m.subtitle AS seriesSubTitle
         m.main_keyword AS keyword,
         MIN(o.img_url) AS imgUrl
+
+        s.oa_id AS partId,
+        o.title AS part_title,
+        o.subtitle AS part_sub_title,
+        o.img_url AS part_img_url
       FROM mon_series m
       LEFT JOIN mon_series_articles s
         ON m.ms_id = s.ms_id
       LEFT JOIN org_article_tb o
         ON s.oa_id = o.oa_id
-      GROUP BY m.ms_id, m.title, m.main_keyword
+      GROUP BY 
+        m.ms_id, m.title, m.subtitle, m.main_keyword,
+        s.oa_id, o.title, o.subtitle, o.img_url
       LIMIT 100 OFFSET 0
     `);
 
     // 4. MongoDB용으로 변환
-    const seriesHistoryData = {
-      studentId: 1, // 필요시 수정
-      seriesList: rows.map((row) => {
-        const parts = [
-          {
-            partId: row.partId,
-            isLearned: false,
-            part_title: row.p_title,
-            part_sub_title: row.p_sub_title,
-          },
-        ];
+    const seriesMap = {};
 
-        return {
-          ...row, // 기존값 유지
+    rows.forEach((row) => {
+      if (!seriesMap[row.seriesId]) {
+        seriesMap[row.seriesId] = {
+          seriesId: row.seriesId,
+          title: row.title,
           sub_title: row.sub_title,
-          status: row.practice ?? "ongoing",
+          keyword: row.keyword,
+          status: "ongoing",
           learningDate: new Date().toISOString().split("T")[0],
-          totalCount: parts.length,
-          learnedCount: parts.filter((p) => p.isLearned).length,
-          parts,
+          imgUrl: row.imgUrl,
+          parts: [],
         };
-      }),
+      }
+
+      if (row.partId) {
+        seriesMap[row.seriesId].parts.push({
+          partId: row.partId,
+          isLearned: false,
+          part_title: row.p_title,
+          part_sub_title: row.p_sub_title,
+        });
+      }
+
+      const s = seriesMap[row.seriesId];
+      s.totalCount = s.parts.length;
+      s.learnedCount = s.parts.filter((p) => p.isLearned).length;
+    });
+
+    const seriesHistoryData = {
+      studentId: 1,
+      seriesList: Object.values(seriesMap),
     };
 
     // 5. MongoDB에 저장
