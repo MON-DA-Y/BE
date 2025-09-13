@@ -1,4 +1,4 @@
-const { getStudentIdFromToken } = require("../auth/token");
+const { getUserIdFromToken } = require("../utils/auth");
 const Attendance = require("../models/attendance");
 const { getWeekRange } = require("../utils/week");
 
@@ -10,7 +10,7 @@ function formatKSTDate(date) {
 
 // 오늘 출석 처리
 exports.todayAttendance = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 1;
+  const studentId = getUserIdFromToken(req, "student") || 1;
   const today = new Date();
   // 오늘 날짜 문자열(KST)
   const todayStr = formatKSTDate(today);
@@ -34,7 +34,7 @@ exports.todayAttendance = async (req, res) => {
 
 // 특정 주차 출석 조회
 exports.getAttendanceByWeek = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 1;
+  const studentId = getUserIdFromToken(req, "student") || 1;
   const weekQuery = req.query.week;
 
   try {
