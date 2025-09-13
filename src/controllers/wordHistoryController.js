@@ -3,7 +3,7 @@ const WordHistory = require("../models/wordHistory");
 const { getWeekRange } = require("../utils/week");
 
 exports.getWordHistory = async (req, res) => {
-  const studentId = getUserIdFromToken(req, "student") || 1;
+  const studentId = Number(getUserIdFromToken(req, "student")) || 1;
   const weekQuery = req.query.week;
 
   try {

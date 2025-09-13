@@ -3,7 +3,7 @@ const NewsHistory = require("../models/newsHistory");
 const { getWeekRange } = require("../utils/week");
 
 exports.getNewsHistory = async (req, res) => {
-  const studentId = getUserIdFromToken(req, "student") || 1;
+  const studentId = Number(getUserIdFromToken(req, "student")) || 1;
   const weekQuery = req.query.week;
 
   try {

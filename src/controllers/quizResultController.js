@@ -3,7 +3,7 @@ const QuizResult = require("../models/quizResult");
 const { getWeekRange } = require("../utils/week");
 
 exports.getQuizResultByWeek = async (req, res) => {
-  const studentId = getUserIdFromToken(req, "student") || 1;
+  const studentId = Number(getUserIdFromToken(req, "student")) || 1;
   const weekQuery = req.query.week;
 
   try {

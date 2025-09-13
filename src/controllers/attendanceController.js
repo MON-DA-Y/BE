@@ -10,7 +10,7 @@ function formatKSTDate(date) {
 
 // 오늘 출석 처리
 exports.todayAttendance = async (req, res) => {
-  const studentId = getUserIdFromToken(req, "student") || 1;
+  const studentId = Number(getUserIdFromToken(req, "student")) || 1;
   const today = new Date();
   // 오늘 날짜 문자열(KST)
   const todayStr = formatKSTDate(today);
