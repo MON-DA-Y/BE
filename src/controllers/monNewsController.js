@@ -52,7 +52,6 @@ exports.postTodayMonNewsDone = async (req, res) => {
           newsList: {
             newsId,
             learningDate: today, // 학습 완료 날짜
-            isCorrect: null,
           },
         },
       },
