@@ -25,7 +25,7 @@ const seriesHistorySeed = async () => {
         m.ms_id AS seriesId,
         m.title AS seriesTitle,
         m.subtitle AS seriesSubTitle
-        m.main_keyword AS keyword,
+        k.main_keyword AS keyword,
         MIN(o.img_url) AS imgUrl
 
         s.oa_id AS partId,
@@ -33,12 +33,14 @@ const seriesHistorySeed = async () => {
         o.subtitle AS part_sub_title,
         o.img_url AS part_img_url
       FROM mon_series m
+      LEFT JOIN mon_series_keywords k
+        ON m.kw_id = k.kw_id 
       LEFT JOIN mon_series_articles s
         ON m.ms_id = s.ms_id
       LEFT JOIN org_article_tb o
         ON s.oa_id = o.oa_id
       GROUP BY 
-        m.ms_id, m.title, m.subtitle, m.main_keyword,
+        m.ms_id, m.title, m.subtitle, k.main_keyword,
         s.oa_id, o.title, o.subtitle, o.img_url
       LIMIT 100 OFFSET 0
     `);
