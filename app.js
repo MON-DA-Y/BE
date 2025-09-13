@@ -15,6 +15,7 @@ const seriesHistoryRouter = require("./src/routes/seriesHistoryRouter");
 const monNewsRouter = require("./src/routes/monNewsRouter");
 const monWordRouter = require("./src/routes/monWordRouter");
 const signUpRouter = require("./src/routes/signUpRouter");
+const logInRouter = require("./src/routes/logInRouter");
 
 const corsOptions = {
   origin: "http://localhost:3000", // 프론트엔드 주소
@@ -54,6 +55,8 @@ app.use("/api", monNewsRouter);
 app.use("/api", monWordRouter);
 // 회원가입
 app.use("/api/signUp", signUpRouter);
+// 로그인
+app.use("/api/logIn", logInRouter);
 
 const PORT = process.env.PORT || 80;
 app.listen(PORT, () => {
