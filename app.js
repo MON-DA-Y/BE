@@ -54,9 +54,9 @@ app.use("/api", monNewsRouter);
 // monWord
 app.use("/api", monWordRouter);
 // 회원가입
-app.use("/api/signUp", signUpRouter);
+app.use("/api", signUpRouter);
 // 로그인
-app.use("/api/logIn", logInRouter);
+app.use("/api", logInRouter);
 
 const PORT = process.env.PORT || 80;
 app.listen(PORT, () => {
