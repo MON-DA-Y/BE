@@ -15,6 +15,7 @@ const wordHistorySeed = async () => {
       user: process.env.MYSQL_USER,
       password: process.env.MYSQL_PASSWORD,
       database: process.env.MYSQL_DB,
+      connectTimeout: 60000,
     });
 
     console.log("MySQL 연결 성공!");
@@ -22,12 +23,16 @@ const wordHistorySeed = async () => {
     // 3. 필요한 데이터 쿼리
     const [rows] = await connection.execute(`
       SELECT 
-        mw_id AS wordId,
-        word,
-        meaning,
-        practice
-      FROM mon_word_items
-      LIMIT 100 OFFSET 0
+        wi.mw_id AS wordId,
+        wi.word AS word,
+        wi.meaning AS meaning,
+        wi.practice AS practice,
+        oa.category AS category
+      FROM mon_word_items wi
+      JOIN mon_words w ON wi.mw_id = w.mw_id
+      JOIN mon_news n ON w.mn_id = n.mn_id
+      JOIN org_article_tb oa ON n.oa_id = oa.oa_id
+      LIMIT 25 OFFSET 0;
     `);
 
     // 4. MongoDB용으로 변환
@@ -38,6 +43,7 @@ const wordHistorySeed = async () => {
         word: row.word,
         explain: row.meaning,
         use: row.practice,
+        category: row.category || "default",
         learningDate: new Date().toISOString().split("T")[0], // 현재 날짜
         isCorrect: null, // 아직 채점 전
       })),

@@ -10,9 +10,9 @@ const parentSchema = new mongoose.Schema({
 
 // 비밀번호 해시
 parentSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  // 이미 $2b$로 시작하면 이미 해시된 비밀번호
+  if (this.password.startsWith("$2b$")) return next();
+  this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
