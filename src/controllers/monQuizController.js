@@ -189,3 +189,25 @@ exports.getTodayMonQuizMark = (req, res) => {
     result: responseQuizMarks,
   });
 };
+
+// [post] 오늘의 monQuiz 채점 학습/확인 완료
+exports.postTodayMonQuizMarkDone = (req, res) => {
+  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
+  const today = new Date().toISOString().split("T")[0];
+
+  // 오늘 데이터 찾기
+  const todayData = dummyMonQuiz.find(
+    (item) => item.studentId === studentId && item.createdAt === today
+  );
+
+  if (!todayData) {
+    return res.status(404).json({ message: "오늘 단어가 없습니다." });
+  }
+
+  if (!todayData.submit) {
+    return res.status(404).json({ message: "퀴즈를 제출하지 않았습니다." });
+  }
+
+  // 학습 완료 처리
+  res.json({ message: "오늘 Mon 퀴즈 채점 확인 완료!" });
+};
