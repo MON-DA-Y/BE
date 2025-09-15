@@ -5,8 +5,8 @@ const dummyMonQuiz = [
   {
     studentId: 123,
     createdAt: new Date().toISOString().split("T")[0], // 오늘 날짜
-    submitDate: null, // 제출 전
-    submit: false, // 제출 전
+    submitDate: new Date(), // 제출 후
+    submit: true, // 제출 후
     quizzes: [
       {
         id: 1,
@@ -91,15 +91,15 @@ exports.postMonQuizSubmit = (req, res) => {
     return res.status(404).json({ message: "오늘 퀴즈가 없습니다." });
   }
 
-  const { selectedAnswers } = req.body;
+  const { selectedChoices } = req.body;
 
-  if (!selectedAnswers || Object.keys(selectedAnswers).length === 0) {
+  if (!selectedChoices || Object.keys(selectedChoices).length === 0) {
     return res.status(400).json({ message: "선택한 답이 없습니다." });
   }
 
   // 선택한 답을 todayData에 반영
   todayData.quizzes.forEach((quiz) => {
-    const selected = selectedAnswers[quiz.id];
+    const selected = selectedChoices[quiz.id];
     if (selected) {
       quiz.selectedAnswer = selected;
       quiz.isCorrect = quiz.answer === selected;
