@@ -4,6 +4,7 @@ const {
   getTodayMonQuiz,
   postMonQuizSubmit,
   getTodayMonQuizMark,
+  postTodayMonQuizMarkDone,
 } = require("../controllers/monQuizController");
 
 // 오늘 mon퀴즈 조회
@@ -14,5 +15,8 @@ router.post("/monQuiz/submit", postMonQuizSubmit);
 
 // mon퀴즈 채점 조회
 router.get("/monQuiz/mark", getTodayMonQuizMark);
+
+// mon퀴즈 채점 학습/확인 완료
+router.post("/monQuiz/done", postTodayMonQuizMarkDone);
 
 module.exports = router;
