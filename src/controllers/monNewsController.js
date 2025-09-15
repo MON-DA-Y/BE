@@ -1,4 +1,4 @@
-const { getStudentIdFromToken } = require("../auth/token");
+const { getUserIdFromToken } = require("../utils/auth");
 const NewsHistory = require("../models/newsHistory");
 
 // 테스트용 더미 데이터
@@ -16,7 +16,7 @@ const dummyMonNews = [
 
 // [get] 오늘의 monNews 조회
 exports.getTodayMonNews = (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 1; // 테스트용 디폴트
+  const studentId = getUserIdFromToken(req, "student") || 1;
   const today = new Date().toISOString().split("T")[0];
 
   const news = dummyMonNews.find(

@@ -1,4 +1,4 @@
-const { getStudentIdFromToken } = require("../auth/token");
+const { getUserIdFromToken } = require("../utils/auth");
 //const Weakness = require("../models/weakness");
 const { getWeekRange } = require("../utils/week");
 
@@ -38,7 +38,7 @@ const DummyWeakness = {
 };
 
 exports.getWeaknessByWeek = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 1;
+  const studentId = getUserIdFromToken(req, "student") || 1;
   const weekQuery = req.query.week;
 
   try {
