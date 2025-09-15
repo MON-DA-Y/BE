@@ -22,7 +22,7 @@ const quizResultSeed = async () => {
     // 3. 필요한 데이터 쿼리
     const [rows] = await connection.execute(`
       SELECT 
-        mq_id AS quizId,
+        mq_id AS quizId
       FROM mon_quiz_items
       LIMIT 100 OFFSET 0
     `);

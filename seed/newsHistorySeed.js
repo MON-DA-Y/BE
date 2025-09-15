@@ -15,6 +15,7 @@ const newsHistorySeed = async () => {
       user: process.env.MYSQL_USER,
       password: process.env.MYSQL_PASSWORD,
       database: process.env.MYSQL_DB,
+      connectTimeout: 60000,
     });
 
     console.log("MySQL 연결 성공!");
@@ -27,9 +28,10 @@ const newsHistorySeed = async () => {
         o.category,
         o.img_url AS imgUrl
       FROM mon_news m
-      LEFT JOIN org_article_tb o
+      JOIN org_article_tb o
         ON m.oa_id = o.oa_id
-      LIMIT 100 OFFSET 0
+      WHERE o.processing_flag = 2
+      LIMIT 100;
     `);
 
     // 4. MongoDB용으로 변환

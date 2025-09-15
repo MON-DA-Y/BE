@@ -21,7 +21,10 @@ const studentSignUp = async (req, res) => {
 
     // 학생 생성
     const student = new Student({ name, email, password: hashedPassword, schoolType, grade });
+    console.log("저장 직전 student 객체:", student);
     await student.save();
+    const savedStudent = await Student.findOne({ email });
+    console.log("DB에 실제 저장된 student:", savedStudent);
 
     // JWT 발급
     const token = jwt.sign({ studentId: student._id }, JWT_SECRET);
