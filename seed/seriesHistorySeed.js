@@ -23,26 +23,22 @@ const seriesHistorySeed = async () => {
     const [rows] = await connection.execute(`
       SELECT 
         m.ms_id AS seriesId,
-        m.title AS seriesTitle,
-        m.subtitle AS seriesSubTitle
+        m.title AS series_title,
+        m.subtitle AS series_sub_title,
         k.main_keyword AS keyword,
-        MIN(o.img_url) AS imgUrl
-
-        s.oa_id AS partId,
+        s.msa_id AS partId,
         o.title AS part_title,
-        o.subtitle AS part_sub_title,
-        o.img_url AS part_img_url
+        s.subtitle AS part_sub_title,
+        MIN(o.img_url) AS imgUrl   
       FROM mon_series m
-      LEFT JOIN mon_series_keywords k
-        ON m.kw_id = k.kw_id 
-      LEFT JOIN mon_series_articles s
-        ON m.ms_id = s.ms_id
-      LEFT JOIN org_article_tb o
-        ON s.oa_id = o.oa_id
+      LEFT JOIN mon_series_main_keywords k ON m.kw_id = k.kw_id
+      LEFT JOIN mon_series_articles s ON m.ms_id = s.ms_id
+      LEFT JOIN org_article_tb o ON s.oa_id = o.oa_id
       GROUP BY 
         m.ms_id, m.title, m.subtitle, k.main_keyword,
-        s.oa_id, o.title, o.subtitle, o.img_url
-      LIMIT 100 OFFSET 0
+        s.oa_id, s.subtitle, o.title
+      LIMIT 100 OFFSET 0;
+
     `);
 
     // 4. MongoDB용으로 변환
@@ -52,8 +48,8 @@ const seriesHistorySeed = async () => {
       if (!seriesMap[row.seriesId]) {
         seriesMap[row.seriesId] = {
           seriesId: row.seriesId,
-          title: row.title,
-          sub_title: row.sub_title,
+          title: row.series_title,
+          sub_title: row.series_sub_title,
           keyword: row.keyword,
           status: "ongoing",
           learningDate: new Date().toISOString().split("T")[0],
@@ -66,8 +62,8 @@ const seriesHistorySeed = async () => {
         seriesMap[row.seriesId].parts.push({
           partId: row.partId,
           isLearned: false,
-          part_title: row.p_title,
-          part_sub_title: row.p_sub_title,
+          part_title: row.part_title,
+          part_sub_title: row.part_sub_title,
         });
       }
 
@@ -81,9 +77,12 @@ const seriesHistorySeed = async () => {
       seriesList: Object.values(seriesMap),
     };
 
+    console.log(rows.length); // 몇 개 내려오는지
+    console.log(rows.slice(0, 5)); // 앞 5개만 확인
+
     // 5. MongoDB에 저장
     await SeriesHistory.deleteMany({ studentId: 1 });
-    await SeriesHistory.insertMany(seriesHistoryData);
+    await SeriesHistory.insertMany([seriesHistoryData]);
 
     console.log("MongoDB 시리즈 히스토리 데이터 삽입 완료!");
     process.exit();

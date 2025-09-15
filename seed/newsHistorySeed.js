@@ -15,6 +15,7 @@ const newsHistorySeed = async () => {
       user: process.env.MYSQL_USER,
       password: process.env.MYSQL_PASSWORD,
       database: process.env.MYSQL_DB,
+      connectTimeout: 60000,
     });
 
     console.log("MySQL 연결 성공!");
@@ -27,14 +28,17 @@ const newsHistorySeed = async () => {
         o.category,
         o.img_url AS imgUrl
       FROM mon_news m
-      LEFT JOIN org_article_tb o
+      JOIN org_article_tb o
         ON m.oa_id = o.oa_id
       LIMIT 100 OFFSET 0
     `);
 
+    const studentId = Number(process.env.STUDENT_ID);
+    if (isNaN(studentId)) throw new Error("STUDENT_ID가 숫자가 아닙니다.");
+
     // 4. MongoDB용으로 변환
     const newsHistoryData = {
-      studentId: 1, // 필요시 수정
+      studentId, // 필요시 수정
       newsList: rows.map((row) => ({
         newsId: row.newsId,
         title: row.title,
@@ -46,7 +50,7 @@ const newsHistorySeed = async () => {
     };
 
     // 5. MongoDB에 저장
-    await NewsHistory.deleteMany({ studentId: 1 });
+    await NewsHistory.deleteMany({ studentId });
     await NewsHistory.insertMany(newsHistoryData);
 
     console.log("MongoDB 뉴스 히스토리 데이터 삽입 완료!");
