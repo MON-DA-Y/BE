@@ -40,6 +40,28 @@ const getStudentIdFromToken = (req) => {
   }
 };
 
+// level 변환 함수
+const getLevelLabel = (level) => {
+  switch (level) {
+    case 1:
+      return "🥑 씨앗";
+    case 2:
+      return "🌱 새싹";
+    case 3:
+      return "🌿 잎새";
+    case 4:
+      return "🪵 가지";
+    case 5:
+      return "🌳 나무";
+    case 6:
+      return "🌼 꽃";
+    case 7:
+      return "🍎 열매";
+    default:
+      return "❓ 미정";
+  }
+};
+
 // [get] 학생 정보 조회
 exports.getStudentInfo = (req, res) => {
   const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
@@ -55,7 +77,7 @@ exports.getStudentInfo = (req, res) => {
 
   const responseStdInfo = {
     std_name: studentInfo.std_name,
-    std_level: studentInfo.std_level,
+    std_level: getLevelLabel(studentInfo.std_level),
     std_img: studentInfo.std_img,
   };
 
