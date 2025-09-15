@@ -59,7 +59,9 @@ exports.getTodayMonQuiz = (req, res) => {
   );
 
   if (!todayData) {
-    return res.status(404).json({ message: "오늘 퀴즈가 없습니다." });
+    return res.status(404).json({
+      message: "오늘의 퀴즈가 아직 생성되지 않았습니다. 다시 접속해주세요.",
+    });
   }
 
   // quizzes 배열에서 필요한 필드만 뽑아서 response
@@ -88,7 +90,9 @@ exports.postMonQuizSubmit = (req, res) => {
   );
 
   if (!todayData) {
-    return res.status(404).json({ message: "오늘 퀴즈가 없습니다." });
+    return res.status(404).json({
+      message: "오늘의 퀴즈가 아직 생성되지 않았습니다. 다시 접속해주세요.",
+    });
   }
 
   const { selectedChoices } = req.body;
@@ -155,7 +159,9 @@ exports.getTodayMonQuizMark = (req, res) => {
   );
 
   if (!todayData) {
-    return res.status(404).json({ message: "오늘 퀴즈가 없습니다." });
+    return res.status(404).json({
+      message: "오늘의 퀴즈가 아직 생성되지 않았습니다. 다시 접속해주세요.",
+    });
   }
 
   if (!todayData.submit) {
@@ -201,7 +207,9 @@ exports.postTodayMonQuizMarkDone = (req, res) => {
   );
 
   if (!todayData) {
-    return res.status(404).json({ message: "오늘 단어가 없습니다." });
+    return res.status(404).json({
+      message: "오늘의 퀴즈가 아직 생성되지 않았습니다. 다시 접속해주세요.",
+    });
   }
 
   if (!todayData.submit) {
