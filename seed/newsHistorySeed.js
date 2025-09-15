@@ -30,13 +30,15 @@ const newsHistorySeed = async () => {
       FROM mon_news m
       JOIN org_article_tb o
         ON m.oa_id = o.oa_id
-      WHERE o.processing_flag = 2
-      LIMIT 100;
+      LIMIT 100 OFFSET 0
     `);
+
+    const studentId = Number(process.env.STUDENT_ID);
+    if (isNaN(studentId)) throw new Error("STUDENT_ID가 숫자가 아닙니다.");
 
     // 4. MongoDB용으로 변환
     const newsHistoryData = {
-      studentId: 1, // 필요시 수정
+      studentId, // 필요시 수정
       newsList: rows.map((row) => ({
         newsId: row.newsId,
         title: row.title,
@@ -48,7 +50,7 @@ const newsHistorySeed = async () => {
     };
 
     // 5. MongoDB에 저장
-    await NewsHistory.deleteMany({ studentId: 1 });
+    await NewsHistory.deleteMany({ studentId });
     await NewsHistory.insertMany(newsHistoryData);
 
     console.log("MongoDB 뉴스 히스토리 데이터 삽입 완료!");
