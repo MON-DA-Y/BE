@@ -1,9 +1,9 @@
-const { getStudentIdFromToken } = require("../auth/token");
+const { getUserIdFromToken } = require("../utils/auth");
 const NewsHistory = require("../models/newsHistory");
 const { getWeekRange } = require("../utils/week");
 
 exports.getNewsHistory = async (req, res) => {
-  const studentId = Number(req.params.studentId) || getStudentIdFromToken(req);
+  const studentId = Number(getUserIdFromToken(req, "student")) || 1;
   const weekQuery = req.query.week;
 
   try {

@@ -1,42 +1,13 @@
-const { getStudentIdFromToken } = require("../auth/token");
-//const SeriesHistory = require("../models/seriesHistory");
+const { getUserIdFromToken } = require("../utils/auth");
+const SeriesHistory = require("../models/seriesHistory");
 const { getWeekRange } = require("../utils/week");
 
-const DummySeriesHistory = {
-  findOne: async ({ studentId }) => {
-    return {
-      studentId,
-      seriesList: [
-        {
-          seriesId: 1,
-          title: "시리즈 제목",
-          sub_title: "시리즈 부제목",
-          keyword: "시리즈 부제목",
-          status: "ongoing",
-          learningDate: "2025-09-09",
-          totalCount: 10,
-          learnedCount: 7,
-          imgUrl: "",
-          parts: [
-            {
-              partId: 101,
-              isLearned: true,
-              part_title: "제목",
-              part_sub_title: "부제목",
-            },
-          ],
-        },
-      ],
-    };
-  },
-};
-
 exports.getSeriesHistory = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 1;
+  const studentId = Number(getUserIdFromToken(req, "student")) || 1;
   const weekQuery = req.query.week;
 
   try {
-    const seriesData = await DummySeriesHistory.findOne({ studentId });
+    const seriesData = await SeriesHistory.findOne({ studentId });
     if (!seriesData)
       return res.status(404).json({ message: "해당 학생의 시리즈 데이터가 없습니다." });
 

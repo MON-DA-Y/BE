@@ -12,7 +12,7 @@ const seriesHistorySchema = new mongoose.Schema({
       learningDate: { type: Date, required: true },
       totalCount: { type: Number, required: true },
       learnedCount: { type: Number, required: true },
-      imgUrl: { type: String, required: true },
+      imgUrl: { type: String, default: null },
       parts: [
         {
           partId: { type: String, required: true },

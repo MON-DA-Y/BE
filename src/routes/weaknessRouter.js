@@ -2,6 +2,6 @@ const express = require("express");
 const router = express.Router();
 const { getWeaknessByWeek } = require("../controllers/weaknessController");
 
-router.get("/:studentId/weakness", getWeaknessByWeek);
+router.get("/weakness", getWeaknessByWeek);
 
 module.exports = router;
