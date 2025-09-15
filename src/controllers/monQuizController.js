@@ -5,7 +5,8 @@ const dummyMonQuiz = [
   {
     studentId: 123,
     createdAt: new Date().toISOString().split("T")[0], // 오늘 날짜
-    learningDate: new Date(),
+    submitDate: null, // 제출 전
+    submit: false, // 제출 전
     quizzes: [
       {
         id: 1,
@@ -102,18 +103,43 @@ exports.postMonQuizSubmit = (req, res) => {
     if (selected) {
       quiz.selectedAnswer = selected;
       quiz.isCorrect = quiz.answer === selected;
+      quiz.answer = selected;
     }
   });
+
+  // 틀린 퀴즈 id 추출
+  const wrongQuizIds = todayData.quizzes
+    .filter((quiz) => !quiz.isCorrect)
+    .map((quiz) => quiz.id);
+
+  // 다른 서버로 전송
+  // try {
+  //   await axios.post(`${서버url}/wrong-quizzes`, {
+  //     studentId,
+  //     wrongQuizIds,
+  //     submittedAt: new Date(),
+  //   });
+  //   console.log("틀린 퀴즈 id 전송 완료:", wrongQuizIds);
+  // } catch (err) {
+  //   console.error("틀린 퀴즈 전송 실패:", err.message);
+  // }
+
+  // 제출 상태 업데이트
+  todayData.submit = true;
+  todayData.submitDate = new Date();
 
   res.json({
     message: "오늘 Mon 퀴즈 제출 완료!",
     result: todayData.quizzes.map(
-      ({ id, isCorrect, selectedAnswer, marking }) => ({
+      ({ id, isCorrect, selectedAnswer, marking, answer }) => ({
         id,
+        answer,
         isCorrect,
         selectedAnswer,
         marking,
       })
     ),
+    submit: todayData.submit,
+    submitDate: todayData.submitDate,
   });
 };
