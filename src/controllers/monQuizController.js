@@ -6,7 +6,7 @@ const dummyMonQuiz = [
     studentId: 123,
     createdAt: new Date().toISOString().split("T")[0], // 오늘 날짜
     submitDate: new Date(), // 제출 후
-    submit: true, // 제출 후
+    submit: false, // 제출 후
     quizzes: [
       {
         id: 1,
@@ -59,7 +59,9 @@ exports.getTodayMonQuiz = (req, res) => {
   );
 
   if (!todayData) {
-    return res.status(404).json({ message: "오늘 퀴즈가 없습니다." });
+    return res.status(404).json({
+      message: "오늘의 퀴즈가 아직 생성되지 않았습니다. 다시 접속해주세요.",
+    });
   }
 
   // quizzes 배열에서 필요한 필드만 뽑아서 response
@@ -88,7 +90,9 @@ exports.postMonQuizSubmit = (req, res) => {
   );
 
   if (!todayData) {
-    return res.status(404).json({ message: "오늘 퀴즈가 없습니다." });
+    return res.status(404).json({
+      message: "오늘의 퀴즈가 아직 생성되지 않았습니다. 다시 접속해주세요.",
+    });
   }
 
   const { selectedChoices } = req.body;
@@ -155,7 +159,9 @@ exports.getTodayMonQuizMark = (req, res) => {
   );
 
   if (!todayData) {
-    return res.status(404).json({ message: "오늘 퀴즈가 없습니다." });
+    return res.status(404).json({
+      message: "오늘의 퀴즈가 아직 생성되지 않았습니다. 다시 접속해주세요.",
+    });
   }
 
   if (!todayData.submit) {
@@ -201,7 +207,9 @@ exports.postTodayMonQuizMarkDone = (req, res) => {
   );
 
   if (!todayData) {
-    return res.status(404).json({ message: "오늘 단어가 없습니다." });
+    return res.status(404).json({
+      message: "오늘의 퀴즈가 아직 생성되지 않았습니다. 다시 접속해주세요.",
+    });
   }
 
   if (!todayData.submit) {
@@ -210,4 +218,33 @@ exports.postTodayMonQuizMarkDone = (req, res) => {
 
   // 학습 완료 처리
   res.json({ message: "오늘 Mon 퀴즈 채점 확인 완료!" });
+};
+
+// [get] 학생이 제출했는지 여부
+exports.getStudentSubmit = (req, res) => {
+  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
+  const today = new Date().toISOString().split("T")[0];
+
+  // 오늘 데이터 찾기
+  const todayData = dummyMonQuiz.find(
+    (item) => item.studentId === studentId && item.createdAt === today
+  );
+
+  if (!todayData) {
+    return res.status(404).json({
+      message: "오늘의 퀴즈가 아직 생성되지 않았습니다. 다시 접속해주세요.",
+    });
+  }
+
+  if (todayData.submit) {
+    return res.json({
+      submit: true,
+      message: "오늘 Mon 퀴즈 채점 확인 완료!",
+    });
+  } else {
+    return res.json({
+      submit: false,
+      message: "퀴즈를 제출하지 않았습니다.",
+    });
+  }
 };
