@@ -143,3 +143,49 @@ exports.postMonQuizSubmit = (req, res) => {
     submitDate: todayData.submitDate,
   });
 };
+
+// [get] 오늘의 monQuiz 채점 조회
+exports.getTodayMonQuizMark = (req, res) => {
+  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
+  const today = new Date().toISOString().split("T")[0];
+
+  // 오늘 데이터 찾기
+  const todayData = dummyMonQuiz.find(
+    (item) => item.studentId === studentId && item.createdAt === today
+  );
+
+  if (!todayData) {
+    return res.status(404).json({ message: "오늘 퀴즈가 없습니다." });
+  }
+
+  if (!todayData.submit) {
+    return res.status(404).json({ message: "퀴즈를 제출하지 않았습니다." });
+  }
+
+  // quizzes 배열에서 필요한 필드만 뽑아서 response
+  const responseQuizMarks = todayData.quizzes.map(
+    ({
+      id,
+      type,
+      question,
+      selectedAnswer,
+      answer,
+      choices,
+      marking,
+      isCorrect,
+    }) => ({
+      id,
+      type,
+      question,
+      choices,
+      answer,
+      selectedAnswer,
+      isCorrect,
+      marking,
+    })
+  );
+
+  res.json({
+    result: responseQuizMarks,
+  });
+};
