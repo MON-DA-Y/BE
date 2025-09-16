@@ -4,7 +4,7 @@ const quizResultSchema = new mongoose.Schema({
   studentId: { type: Number, required: true },
   results: [
     {
-      quizId: { type: String, required: true },
+      quizId: { type: Number, required: true },
       day: { type: Date, required: true },
       score: { type: Number, default: null },
     },

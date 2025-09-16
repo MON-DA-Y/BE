@@ -1,5 +1,5 @@
 const { getUserIdFromToken } = require("../utils/auth");
-const NewsHistory = require("../models/newsHistory");
+const NewsHistory = require("../models/NewsHistory");
 
 // 테스트용 더미 데이터
 const dummyMonNews = [
@@ -51,7 +51,11 @@ exports.postTodayMonNewsDone = async (req, res) => {
         $push: {
           newsList: {
             newsId,
-            learningDate: today, // 학습 완료 날짜
+            title,
+            imgUrl,
+            category,
+            learningDate: today,
+            isCorrect: null,
           },
         },
       },
