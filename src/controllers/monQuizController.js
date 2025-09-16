@@ -16,8 +16,7 @@ const dummyMonQuiz = [
         answer: "물가 상승",
         selectedAnswer: "물가 상승",
         isCorrect: true,
-        marking:
-          "물가가 오르는 게 인플레이션이에요! 용돈으로 살 수 있는 과자 수가 줄어드는 거죠.",
+        marking: "물가가 오르는 게 인플레이션이에요! 용돈으로 살 수 있는 과자 수가 줄어드는 거죠.",
       },
       {
         id: 2,
@@ -27,8 +26,7 @@ const dummyMonQuiz = [
         answer: "물가 하락",
         selectedAnswer: "경제 성장",
         isCorrect: false,
-        marking:
-          "물가가 내려가는 게 디플레이션이에요! 용돈으로 살 수 있는 과자 수가 많아져요.",
+        marking: "물가가 내려가는 게 디플레이션이에요! 용돈으로 살 수 있는 과자 수가 많아져요.",
       },
     ],
   },
@@ -65,14 +63,12 @@ exports.getTodayMonQuiz = (req, res) => {
   }
 
   // quizzes 배열에서 필요한 필드만 뽑아서 response
-  const responseQuizzes = todayData.quizzes.map(
-    ({ id, type, question, choices }) => ({
-      id,
-      type,
-      question,
-      choices,
-    })
-  );
+  const responseQuizzes = todayData.quizzes.map(({ id, type, question, choices }) => ({
+    id,
+    type,
+    question,
+    choices,
+  }));
 
   res.json({
     result: responseQuizzes,
@@ -80,7 +76,7 @@ exports.getTodayMonQuiz = (req, res) => {
 };
 
 // [post] 오늘의 MonQuiz 제출
-exports.postMonQuizSubmit = (req, res) => {
+exports.postMonQuizSubmit = async (req, res) => {
   const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
   const today = new Date().toISOString().split("T")[0];
 
@@ -112,9 +108,7 @@ exports.postMonQuizSubmit = (req, res) => {
   });
 
   // 틀린 퀴즈 id 추출
-  const wrongQuizIds = todayData.quizzes
-    .filter((quiz) => !quiz.isCorrect)
-    .map((quiz) => quiz.id);
+  const wrongQuizIds = todayData.quizzes.filter((quiz) => !quiz.isCorrect).map((quiz) => quiz.id);
 
   // 다른 서버로 전송
   // try {
@@ -132,17 +126,35 @@ exports.postMonQuizSubmit = (req, res) => {
   todayData.submit = true;
   todayData.submitDate = new Date();
 
+  // score 계산
+  const totalQuizzes = todayData.quizzes.length;
+  const correctCount = todayData.quizzes.filter((q) => q.isCorrect).length;
+  const percentageScore = Math.round((correctCount / totalQuizzes) * 100);
+
+  // quizResult 컬렉션에 저장
+  await QuizResult.updateOne(
+    { studentId },
+    {
+      $push: {
+        results: todayData.quizzes.map((quiz) => ({
+          quizId: quiz.id,
+          day: today,
+          score: percentageScore,
+        })),
+      },
+    },
+    { upsert: true }
+  );
+
   res.json({
     message: "오늘 Mon 퀴즈 제출 완료!",
-    result: todayData.quizzes.map(
-      ({ id, isCorrect, selectedAnswer, marking, answer }) => ({
-        id,
-        answer,
-        isCorrect,
-        selectedAnswer,
-        marking,
-      })
-    ),
+    result: todayData.quizzes.map(({ id, isCorrect, selectedAnswer, marking, answer }) => ({
+      id,
+      answer,
+      isCorrect,
+      selectedAnswer,
+      marking,
+    })),
     submit: todayData.submit,
     submitDate: todayData.submitDate,
   });
@@ -170,16 +182,7 @@ exports.getTodayMonQuizMark = (req, res) => {
 
   // quizzes 배열에서 필요한 필드만 뽑아서 response
   const responseQuizMarks = todayData.quizzes.map(
-    ({
-      id,
-      type,
-      question,
-      selectedAnswer,
-      answer,
-      choices,
-      marking,
-      isCorrect,
-    }) => ({
+    ({ id, type, question, selectedAnswer, answer, choices, marking, isCorrect }) => ({
       id,
       type,
       question,

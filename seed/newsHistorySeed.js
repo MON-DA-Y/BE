@@ -1,7 +1,7 @@
 require("dotenv").config();
 const mysql = require("mysql2/promise");
 const connectDB = require("../src/config/db");
-const NewsHistory = require("../src/models/newsHistory");
+const NewsHistory = require("../src/models/NewsHistory");
 
 const newsHistorySeed = async () => {
   try {

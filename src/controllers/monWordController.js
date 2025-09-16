@@ -100,7 +100,7 @@ exports.postWordItemUnderstand = (req, res) => {
 };
 
 // [post] 오늘의 monWord 완료
-exports.postTodayMonWordDone = (req, res) => {
+exports.postTodayMonWordDone = async (req, res) => {
   const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
   const today = new Date().toISOString().split("T")[0];
 
@@ -119,6 +119,27 @@ exports.postTodayMonWordDone = (req, res) => {
   if (!allUnderstood) {
     return res.status(400).json({ message: "모든 단어를 학습해주세요." });
   }
+
+  // 단어 히스토리에 학습 기록 추가
+  await WordHistory.updateOne(
+    { studentId },
+    {
+      $push: {
+        words: {
+          $each: todayData.words.map((row) => ({
+            wordId: row.wordId,
+            word: row.word,
+            explain: row.meaning,
+            use: row.practice,
+            category: row.category,
+            learningDate: today,
+            isCorrect: null,
+          })),
+        },
+      },
+    },
+    { upsert: true }
+  );
 
   // 학습 완료 처리
   res.json({ message: "오늘 Mon 단어 학습 완료!" });

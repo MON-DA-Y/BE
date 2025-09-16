@@ -4,7 +4,7 @@ const newsSchema = new mongoose.Schema({
   studentId: { type: Number, required: true },
   newsList: [
     {
-      newsId: { type: String, required: true },
+      newsId: { type: Number, required: true },
       learningDate: { type: Date, required: true },
       title: { type: String, required: true },
       imgUrl: { type: String, default: null },
