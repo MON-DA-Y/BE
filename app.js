@@ -16,6 +16,8 @@ const monNewsRouter = require("./src/routes/monNewsRouter");
 const monWordRouter = require("./src/routes/monWordRouter");
 const monQuizRouter = require("./src/routes/monQuizRouter");
 const studentInfoRouter = require("./src/routes/studentInfoRouter");
+const signUpRouter = require("./src/routes/signUpRouter");
+const logInRouter = require("./src/routes/logInRouter");
 
 const corsOptions = {
   origin: "http://localhost:3000", // 프론트엔드 주소
@@ -57,6 +59,10 @@ app.use("/api", monWordRouter);
 app.use("/api", monQuizRouter);
 // 학생 정보 조회 - myInfo 컴포넌트
 app.use("/api", studentInfoRouter);
+// 회원가입
+app.use("/api", signUpRouter);
+// 로그인
+app.use("/api", logInRouter);
 
 const PORT = process.env.PORT || 80;
 app.listen(PORT, () => {

@@ -34,7 +34,7 @@ exports.todayAttendance = async (req, res) => {
 
 // 특정 주차 출석 조회
 exports.getAttendanceByWeek = async (req, res) => {
-  const studentId = getUserIdFromToken(req, "student") || 1;
+  const studentId = Number(getUserIdFromToken(req, "student")) || 1;
   const weekQuery = req.query.week;
 
   try {
