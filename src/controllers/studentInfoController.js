@@ -1,5 +1,7 @@
-const { response } = require("express");
-const jwt = require("jsonwebtoken");
+// const { response } = require("express");
+// const jwt = require("jsonwebtoken");
+const Student = require("../models/student");
+const { getUserIdFromToken } = require("../utils/auth");
 
 // 테스트용 더미 데이터
 const dummyStudent = [
@@ -7,15 +9,13 @@ const dummyStudent = [
     std_id: 123,
     std_name: "마수민",
     std_level: 1,
-    std_img:
-      "https://i.pinimg.com/736x/00/01/dc/0001dc013a9fdaaf3c67cf8818c58b58.jpg",
+    std_img: "https://i.pinimg.com/736x/00/01/dc/0001dc013a9fdaaf3c67cf8818c58b58.jpg",
   },
   {
     std_id: 1234,
     std_name: "유동은",
     std_level: 2,
-    std_img:
-      "https://i.pinimg.com/736x/b3/6d/d2/b36dd260dc6d22466fc1707ecbd12268.jpg",
+    std_img: "https://i.pinimg.com/736x/b3/6d/d2/b36dd260dc6d22466fc1707ecbd12268.jpg",
   },
   {
     std_id: 12345,
@@ -27,18 +27,18 @@ const dummyStudent = [
 ];
 
 // 토큰에서 studentId 추출
-const getStudentIdFromToken = (req) => {
-  const authHeader = req.headers["authorization"];
-  if (!authHeader) return null;
+// const getStudentIdFromToken = (req) => {
+//   const authHeader = req.headers["authorization"];
+//   if (!authHeader) return null;
 
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return decoded.studentId;
-  } catch (err) {
-    console.error(err);
-  }
-};
+//   const token = authHeader.split(" ")[1];
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     return decoded.studentId;
+//   } catch (err) {
+//     console.error(err);
+//   }
+// };
 
 // level 변환 함수
 const getLevelLabel = (level) => {
@@ -63,25 +63,26 @@ const getLevelLabel = (level) => {
 };
 
 // [get] 학생 정보 조회
-exports.getStudentInfo = (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
+exports.getStudentInfo = async (req, res) => {
+  const studentId = getUserIdFromToken(req, "student"); // 테스트용 디폴트
 
-  // 학생 정보 데이터 찾기
-  const studentInfo = dummyStudent.find(
-    (student) => student.std_id === studentId
-  );
+  try {
+    // DB에서 조회, 비밀번호 제외
+    const student = await Student.findById(studentId).select("-password");
+    if (!student) return res.status(404).json({ message: "학생 정보가 없습니다." });
 
-  if (!studentInfo) {
-    return res.status(404).json({ message: "학생 정보가 없습니다." });
+    const responseStdInfo = {
+      std_name: student.name,
+      std_level: getLevelLabel(student.level || 1),
+      std_img: student.img || "",
+      std_email: student.email,
+      std_schoolType: student.schoolType,
+      std_grade: student.grade,
+    };
+
+    res.json({ result: responseStdInfo });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버 오류" });
   }
-
-  const responseStdInfo = {
-    std_name: studentInfo.std_name,
-    std_level: getLevelLabel(studentInfo.std_level),
-    std_img: studentInfo.std_img,
-  };
-
-  res.json({
-    result: responseStdInfo,
-  });
 };
