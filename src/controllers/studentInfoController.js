@@ -72,6 +72,7 @@ exports.getStudentInfo = async (req, res) => {
     if (!student) return res.status(404).json({ message: "학생 정보가 없습니다." });
 
     const responseStdInfo = {
+      std_id: student.id,
       std_name: student.name,
       std_level: getLevelLabel(student.level || 1),
       std_img: student.img || "",
@@ -81,6 +82,27 @@ exports.getStudentInfo = async (req, res) => {
     };
 
     res.json({ result: responseStdInfo });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+exports.getStudentByEmail = async (req, res) => {
+  const { email } = req.query; //
+  try {
+    const student = await Student.findOne({ email }).select("-password");
+    if (!student) return res.status(404).json({ message: "학생을 찾을 수 없습니다." });
+
+    res.json({
+      std_name: student.name,
+      std_level: student.level || "1",
+      std_img: student.img || "",
+      std_schoolType: student.schoolType,
+      std_grade: student.grade,
+      std_email: student.email,
+      _id: student._id, // 부모-자녀 연결용
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버 오류" });
