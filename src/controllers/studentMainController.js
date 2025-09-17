@@ -60,7 +60,7 @@ exports.getStdMonWord = (req, res) => {
   }
 
   // words 배열에서 필요한 필드만 뽑아서 response
-  const responseWords = todayData.words.map(({ word }) => ({ word }));
+  const responseWords = todayData.words.map(({ word }) => word);
 
   res.json({
     result: responseWords,
