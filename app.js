@@ -19,6 +19,7 @@ const studentInfoRouter = require("./src/routes/studentInfoRouter");
 const signUpRouter = require("./src/routes/signUpRouter");
 const logInRouter = require("./src/routes/logInRouter");
 const parentInfoRouter = require("./src/routes/parentInfoRouter");
+const studentMainRouter = require("./src/routes/studentMainRouter");
 
 const corsOptions = {
   origin: "http://localhost:3000", // 프론트엔드 주소
@@ -66,6 +67,8 @@ app.use("/api", parentInfoRouter);
 app.use("/api", signUpRouter);
 // 로그인
 app.use("/api", logInRouter);
+// 학생 메인
+app.use("/api", studentMainRouter);
 
 const PORT = process.env.PORT || 80;
 app.listen(PORT, () => {
