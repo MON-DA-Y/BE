@@ -18,6 +18,7 @@ const monQuizRouter = require("./src/routes/monQuizRouter");
 const studentInfoRouter = require("./src/routes/studentInfoRouter");
 const signUpRouter = require("./src/routes/signUpRouter");
 const logInRouter = require("./src/routes/logInRouter");
+const parentInfoRouter = require("./src/routes/parentInfoRouter");
 
 const corsOptions = {
   origin: "http://localhost:3000", // 프론트엔드 주소
@@ -59,6 +60,8 @@ app.use("/api", monWordRouter);
 app.use("/api", monQuizRouter);
 // 학생 정보 조회 - myInfo 컴포넌트
 app.use("/api", studentInfoRouter);
+// 학부모 정보 조회
+app.use("/api", parentInfoRouter);
 // 회원가입
 app.use("/api", signUpRouter);
 // 로그인
