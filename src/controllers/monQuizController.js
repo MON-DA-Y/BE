@@ -193,6 +193,15 @@ exports.postMonQuizSubmit = async (req, res) => {
           },
           summary: null,
         },
+        weakNews: {
+          date: weekEnd,
+          categories: {
+            category,
+            total: totalQuizzes,
+            correct: correctCount,
+          },
+          summary: null,
+        },
       },
     },
     { upsert: true }
