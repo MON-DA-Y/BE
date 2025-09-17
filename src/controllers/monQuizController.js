@@ -177,16 +177,21 @@ exports.postMonQuizSubmit = async (req, res) => {
   );
 
   // weakness 컬렉션에 저장
+  const { weekEnd } = getWeekRange("이번주");
   const category = await getCategoryByQuiz(mq_id);
 
   await Weakness.updateOne(
-    { studentId, date: getWeekStart(today) },
+    { studentId },
     {
       $push: {
-        categories: {
-          category,
-          total: totalQuizzes,
-          correct: correctCount,
+        weakWord: {
+          date: weekEnd,
+          categories: {
+            category,
+            total: totalQuizzes,
+            correct: correctCount,
+          },
+          summary: null,
         },
       },
     },
