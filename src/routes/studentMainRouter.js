@@ -1,12 +1,15 @@
 const express = require("express");
 const router = express.Router();
-const { getStdMonWord } = require("../controllers/studentMainController");
+const {
+  getStdMonWord,
+  getStdMonNews,
+} = require("../controllers/studentMainController");
 
 // monWord 조회
 router.get("/std/monWord", getStdMonWord);
 
 // monNews 조회
-router.get("/std/monNews");
+router.get("/std/monNews", getStdMonNews);
 
 // monSeries 조회
 router.get("/std/monSeries");
