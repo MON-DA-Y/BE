@@ -9,12 +9,13 @@ const DummyWeakness = {
       studentId,
       weakWord: [
         {
-          date: "2025-09-01", // 해당 주의 시작일
+          date: "2025-09-14", // 전 주 일요일에 보내는 걸로 !
           categories: [
             { category: "MONEY", total: 10, correct: 7 },
             { category: "GLOBAL", total: 5, correct: 4 },
             { category: "BIGPICTURE", total: 8, correct: 3 },
             { category: "ISSUES", total: 7, correct: 3 },
+            { category: "TECH", total: 7, correct: 3 },
           ],
           summary:
             "특히 거시경제와 정책/이슈에서 틀린 개수가 많아요. 이번 주에는 이 두 분야를 집중적으로 학습하면 좋겠어요!",
@@ -22,12 +23,12 @@ const DummyWeakness = {
       ],
       weakNews: [
         {
-          date: "2025-09-01", // 해당 주의 시작일
+          date: "2025-09-14",
           categories: [
             { category: "TECH", total: 10, correct: 7 },
             { category: "GLOBAL", total: 5, correct: 4 },
-            { category: "BIGPICTURE", total: 8, correct: 3 },
-            { category: "ISSUES", total: 7, correct: 3 },
+            { category: "BIGPICTURE", total: 8, correct: 5 },
+            { category: "ISSUES", total: 7, correct: 5 },
           ],
           summary:
             "특히 거시경제와 정책/이슈에서 틀린 개수가 많아요. 이번 주에는 이 두 분야를 집중적으로 학습하면 좋겠어요!",
@@ -48,13 +49,31 @@ exports.getWeaknessByWeek = async (req, res) => {
     const { weekStart } = getWeekRange(weekQuery);
     const weekStartStr = weekStart.toISOString().split("T")[0];
 
-    // weekStart와 일치하는 데이터 하나 가져오기
+    // 임계값
+    const threshold = 50;
+
+    // week, 임계값 조건에 맞는 데이터 필터링
     const weekWeakWord = weakness.weakWord.find((w) => w.date === weekStartStr);
+    const filteredWordCategories = weekWeakWord
+      ? weekWeakWord.categories.filter((c) => (c.correct / c.total) * 100 < threshold)
+      : [];
+
     const weekWeakNews = weakness.weakNews.find((w) => w.date === weekStartStr);
+    const filteredNewsCategories = weekWeakNews
+      ? weekWeakNews.categories.filter((c) => (c.correct / c.total) * 100 < threshold)
+      : [];
 
     res.json({
-      weakWord: weekWeakWord || null,
-      weakNews: weekWeakNews || null,
+      weakWord: {
+        date: weekStartStr,
+        summary: weekWeakWord?.summary || null,
+        categories: filteredWordCategories,
+      },
+      weakNews: {
+        date: weekStartStr,
+        summary: weekWeakNews?.summary || null,
+        categories: filteredNewsCategories,
+      },
     });
   } catch (err) {
     console.error(err);

@@ -46,6 +46,36 @@ const getStudentIdFromToken = (req) => {
   }
 };
 
+// mon_quiz_id로 category 가져오기
+const getCategoryByQuiz = async (mq_id) => {
+  const result = await MonQuiz.aggregate([
+    { $match: { mq_id } }, // mon_quiz에서 mq_id
+    {
+      $lookup: {
+        from: "mon_news", // mon_news
+        localField: "mn_id",
+        foreignField: "mn_id",
+        as: "news",
+      },
+    },
+    { $unwind: "$news" },
+    {
+      $lookup: {
+        from: "org_article_tb", // org_article_tb
+        localField: "news.oa_id",
+        foreignField: "oa_id",
+        as: "article",
+      },
+    },
+    { $unwind: "$article" },
+    { $project: { category: "$article.category", _id: 0 } },
+  ]);
+
+  if (!result.length) throw new Error("Category not found");
+
+  return result[0].category;
+};
+
 // [get] 오늘의 monQuiz 조회
 exports.getTodayMonQuiz = (req, res) => {
   const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
@@ -141,6 +171,23 @@ exports.postMonQuizSubmit = async (req, res) => {
           day: today,
           score: percentageScore,
         })),
+      },
+    },
+    { upsert: true }
+  );
+
+  // weakness 컬렉션에 저장
+  const category = await getCategoryByQuiz(mq_id);
+
+  await Weakness.updateOne(
+    { studentId, date: getWeekStart(today) },
+    {
+      $push: {
+        categories: {
+          category,
+          total: totalQuizzes,
+          correct: correctCount,
+        },
       },
     },
     { upsert: true }
