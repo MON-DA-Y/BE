@@ -1,6 +1,7 @@
 const { getUserIdFromToken } = require("../utils/auth");
 //const Weakness = require("../models/weakness");
 const { getWeekRange } = require("../utils/week");
+const { getLatestSummary } = require("../models/weakness");
 
 const DummyWeakness = {
   findOne: async ({ studentId }) => {
@@ -17,7 +18,7 @@ const DummyWeakness = {
             { category: "ISSUES", total: 7, correct: 3 },
             { category: "TECH", total: 7, correct: 3 },
           ],
-          summary:
+          summary_words:
             "특히 거시경제와 정책/이슈에서 틀린 개수가 많아요. 이번 주에는 이 두 분야를 집중적으로 학습하면 좋겠어요!",
         },
       ],
@@ -30,7 +31,7 @@ const DummyWeakness = {
             { category: "BIGPICTURE", total: 8, correct: 5 },
             { category: "ISSUES", total: 7, correct: 5 },
           ],
-          summary:
+          summary_news:
             "특히 거시경제와 정책/이슈에서 틀린 개수가 많아요. 이번 주에는 이 두 분야를 집중적으로 학습하면 좋겠어요!",
         },
       ],
@@ -63,16 +64,19 @@ exports.getWeaknessByWeek = async (req, res) => {
       ? weekWeakNews.categories.filter((c) => (c.correct / c.total) * 100 < threshold)
       : [];
 
+    // MySQL에서 최신 summary 조회
+    const summary = await getLatestSummary(studentId);
+
     res.json({
       weakWord: {
         date: weekStartStr,
-        summary: weekWeakWord?.summary || null,
         categories: filteredWordCategories,
+        summary_words: summary.summary_words || null,
       },
       weakNews: {
         date: weekStartStr,
-        summary: weekWeakNews?.summary || null,
         categories: filteredNewsCategories,
+        summary_news: summary.summary_news || null,
       },
     });
   } catch (err) {
