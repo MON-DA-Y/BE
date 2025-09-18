@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const newsSchema = new mongoose.Schema({
-  studentId: { type: Number, required: true },
+  studentId: { type: String, required: true },
   newsList: [
     {
       newsId: { type: Number, required: true },

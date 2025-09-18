@@ -4,7 +4,7 @@ const { getWeekRange } = require("../utils/week");
 
 // 뉴스 히스토리 조회
 exports.getNewsHistory = async (req, res) => {
-  const studentId = Number(getUserIdFromToken(req, "student"));
+  const studentId = getUserIdFromToken(req, "student");
   const weekQuery = req.query.week;
 
   try {

@@ -9,7 +9,7 @@ const DummyWeakness = {
       studentId,
       weakWord: [
         {
-          date: "2025-09-14", // 전 주 일요일에 보내는 걸로 !
+          date: "2025-09-15", // 전 주 일요일에 보내는 걸로 !
           categories: [
             { category: "MONEY", total: 10, correct: 7 },
             { category: "GLOBAL", total: 5, correct: 4 },
@@ -23,7 +23,7 @@ const DummyWeakness = {
       ],
       weakNews: [
         {
-          date: "2025-09-14",
+          date: "2025-09-15",
           categories: [
             { category: "TECH", total: 10, correct: 7 },
             { category: "GLOBAL", total: 5, correct: 4 },
@@ -39,7 +39,7 @@ const DummyWeakness = {
 };
 
 exports.getWeaknessByWeek = async (req, res) => {
-  const studentId = getUserIdFromToken(req, "student") || 1;
+  const studentId = getUserIdFromToken(req, "student");
   const weekQuery = req.query.week;
 
   try {
