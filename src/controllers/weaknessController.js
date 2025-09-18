@@ -39,7 +39,7 @@ const DummyWeakness = {
 };
 
 exports.getWeaknessByWeek = async (req, res) => {
-  const studentId = getUserIdFromToken(req, "student") || 1;
+  const studentId = getUserIdFromToken(req, "student");
   const weekQuery = req.query.week;
 
   try {

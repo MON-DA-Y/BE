@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const progressSchema = new mongoose.Schema({
-  studentId: { type: Number, required: true },
+  studentId: { type: String, required: true },
   weekCompletionRate: { type: Number, required: true, default: 0 },
   days: [
     {

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const weaknessSchema = new mongoose.Schema({
-  studentId: { type: Number, required: true },
+  studentId: { type: String, required: true },
   weakWord: [
     {
       date: { type: Date, required: true }, // 해당 주의 시작일
