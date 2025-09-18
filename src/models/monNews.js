@@ -1,18 +1,22 @@
 const mongoose = require("mongoose");
 
-const newsSchema = new mongoose.Schema({
-  studentId: { type: String, required: true },
+const studentNewsSchema = new mongoose.Schema({
+  studentId: { type: Number, required: true, index: true },
   newsList: [
     {
-      newsId: { type: Number, required: true },
-      learningDate: { type: Date, required: true },
-      title: { type: String, required: true },
-      imgUrl: { type: String, default: null },
-      body: { type: String, default: null },
-      summary: { type: String, default: null },
-      createdAt: { type: Date, default: null },
+      mnId: { type: Number, required: true },
+      level: { type: String, required: true },
+      title: { type: String },
+      body: { type: String },
+      summary: { type: String },
+      imgUrl: { type: String },
+      assignedAt: { type: Date, default: Date.now }, // 학생에게 할당된 시각
+      learningDate: { type: Date, default: null }, // 학생이 실제로 학습한 시각
+      completed: { type: Boolean, default: false },
     },
   ],
 });
 
-module.exports = mongoose.model("News", newsSchema);
+studentNewsSchema.index({ studentId: 1, "newsList.mnId": 1 });
+
+module.exports = mongoose.model("StudentNews", studentNewsSchema);
