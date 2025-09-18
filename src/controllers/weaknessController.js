@@ -10,7 +10,7 @@ const DummyWeakness = {
       studentId,
       weakWord: [
         {
-          date: "2025-09-15", // 전 주 일요일에 보내는 걸로 !
+          date: "2025-09-15", // 퀴즈 보고 다음주의 시작일 !
           categories: [
             { category: "MONEY", total: 10, correct: 7 },
             { category: "GLOBAL", total: 5, correct: 4 },
@@ -47,14 +47,21 @@ exports.getWeaknessByWeek = async (req, res) => {
     const weakness = await DummyWeakness.findOne({ studentId });
     if (!weakness) return res.json({ weakWord: null, weakNews: null });
 
+    function formatKSTDate(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+        date.getDate()
+      ).padStart(2, "0")}`;
+    }
+
     const { weekStart } = getWeekRange(weekQuery);
-    const weekStartStr = weekStart.toISOString().split("T")[0];
+    const weekStartStr = formatKSTDate(weekStart);
 
     // 임계값
     const threshold = 50;
 
     // week, 임계값 조건에 맞는 데이터 필터링
     const weekWeakWord = weakness.weakWord.find((w) => w.date === weekStartStr);
+    console.log("weekWeakWord:", weekWeakWord);
     const filteredWordCategories = weekWeakWord
       ? weekWeakWord.categories.filter((c) => (c.correct / c.total) * 100 < threshold)
       : [];
