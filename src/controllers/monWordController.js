@@ -151,7 +151,7 @@ exports.postTodayMonWordDone = async (req, res) => {
     },
     { upsert: true }
   );
-  await Progress.updateWeekCompletion(studentId, today);
+  await Progress.updateStrikeDay(studentId, today);
   s;
 
   // 학습 완료 처리

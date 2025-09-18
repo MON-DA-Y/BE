@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const progressSchema = new mongoose.Schema({
   studentId: { type: String, required: true },
   weekCompletionRate: { type: Number, required: true, default: 0 },
+  strikeDay: { type: Number, required: true, default: 0 },
   days: [
     {
       day: { type: Date, required: true },
@@ -16,8 +17,8 @@ const progressSchema = new mongoose.Schema({
   ],
 });
 
-// 다 완료하면 weekCompletionRate +1
-progressSchema.statics.updateWeekCompletion = async function (studentId, today) {
+// 다 완료하면 strikeDay +1
+progressSchema.statics.updateStrikeDay = async function (studentId, today) {
   const progress = await this.findOne({ studentId });
   if (!progress) return;
 
@@ -26,8 +27,30 @@ progressSchema.statics.updateWeekCompletion = async function (studentId, today) 
 
   const { word, news, series, quiz } = todayData.tasks;
   if (word === "done" && news === "done" && series === "done" && quiz === "done") {
-    await this.updateOne({ studentId }, { $inc: { weekCompletionRate: 1 } });
+    await this.updateOne({ studentId }, { $inc: { strikeDay: 1 } });
   }
+};
+
+// 주차 완성도 계산 후 업데이트
+progressSchema.statics.updateWeekCompletionRate = async function (studentId) {
+  const progress = await this.findOne({ studentId });
+  if (!progress || !progress.days.length) return;
+
+  let totalTasks = 0;
+  let completedTasks = 0;
+
+  progress.days.forEach((day) => {
+    const tasks = Object.values(day.tasks);
+    totalTasks += tasks.length;
+    completedTasks += tasks.filter((status) => status === "done").length;
+  });
+
+  const weekCompletionRate = totalTasks === 0 ? 0 : (completedTasks / totalTasks) * 100;
+
+  // DB 업데이트
+  await this.updateOne({ studentId }, { $set: { weekCompletionRate } });
+
+  return weekCompletionRate;
 };
 
 module.exports = mongoose.model("Progress", progressSchema);

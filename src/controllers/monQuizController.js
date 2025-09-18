@@ -220,7 +220,7 @@ exports.postMonQuizSubmit = async (req, res) => {
     },
     { upsert: true }
   );
-  await Progress.updateWeekCompletion(studentId, today);
+  await Progress.updateStrikeDay(studentId, today);
 
   res.json({
     message: "오늘 Mon 퀴즈 제출 완료!",

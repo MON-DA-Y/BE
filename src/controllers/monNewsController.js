@@ -72,7 +72,7 @@ exports.postTodayMonNewsDone = async (req, res) => {
       },
       { upsert: true }
     );
-    await Progress.updateWeekCompletion(studentId, today);
+    await Progress.updateStrikeDay(studentId, today);
 
     // console.log(`학생 ${studentId}의 ${today} 뉴스 학습 완료!`);
     res.json({ message: "오늘 MON 뉴스 학습 완료!", learningDate: today });
