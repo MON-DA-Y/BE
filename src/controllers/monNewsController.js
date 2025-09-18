@@ -133,6 +133,22 @@ exports.postTodayMonNewsDone = async (req, res) => {
     }
 
     res.json({ message: "오늘 MON 뉴스 학습 완료!" });
+
+    // monNews 변경 사항 이었던 것
+    // // progress에 오늘 뉴스 완료 반영
+    // await Progress.updateOne(
+    //   { studentId, "days.day": today },
+    //   {
+    //     $set: {
+    //       "days.$.tasks.news": "done",
+    //     },
+    //   },
+    //   { upsert: true }
+    // );
+    // await Progress.updateStrikeDay(studentId, today);
+
+    // // console.log(`학생 ${studentId}의 ${today} 뉴스 학습 완료!`);
+    // res.json({ message: "오늘 MON 뉴스 학습 완료!", learningDate: today });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "뉴스 학습 완료 처리 실패" });

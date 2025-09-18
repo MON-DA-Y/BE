@@ -178,6 +178,9 @@ exports.postMonQuizSubmit = async (req, res) => {
 
   // weakness 컬렉션에 저장
   const { weekEnd } = getWeekRange("이번주");
+  const nextDay = new Date(weekEnd);
+  nextDay.setDate(nextDay.getDate() + 1);
+
   const category = await getCategoryByQuiz(mq_id);
 
   await Weakness.updateOne(
@@ -185,7 +188,7 @@ exports.postMonQuizSubmit = async (req, res) => {
     {
       $push: {
         weakWord: {
-          date: weekEnd,
+          date: nextDay,
           categories: {
             category,
             total: totalQuizzes,
@@ -194,7 +197,7 @@ exports.postMonQuizSubmit = async (req, res) => {
           summary: null,
         },
         weakNews: {
-          date: weekEnd,
+          date: nextDay,
           categories: {
             category,
             total: totalQuizzes,
@@ -206,6 +209,18 @@ exports.postMonQuizSubmit = async (req, res) => {
     },
     { upsert: true }
   );
+
+  // progress에 오늘 퀴즈 완료 반영
+  await Progress.updateOne(
+    { studentId, "days.day": today },
+    {
+      $set: {
+        "days.$.tasks.quiz": "done",
+      },
+    },
+    { upsert: true }
+  );
+  await Progress.updateStrikeDay(studentId, today);
 
   res.json({
     message: "오늘 Mon 퀴즈 제출 완료!",

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const seriesHistorySchema = new mongoose.Schema({
-  studentId: { type: Number, required: true },
+  studentId: { type: String, required: true },
   seriesList: [
     {
       seriesId: { type: Number, required: true },
