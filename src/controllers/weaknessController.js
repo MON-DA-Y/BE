@@ -61,7 +61,6 @@ exports.getWeaknessByWeek = async (req, res) => {
 
     // week, 임계값 조건에 맞는 데이터 필터링
     const weekWeakWord = weakness.weakWord.find((w) => w.date === weekStartStr);
-    console.log("weekWeakWord:", weekWeakWord);
     const filteredWordCategories = weekWeakWord
       ? weekWeakWord.categories.filter((c) => (c.correct / c.total) * 100 < threshold)
       : [];
