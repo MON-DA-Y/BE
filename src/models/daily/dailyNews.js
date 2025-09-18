@@ -5,7 +5,7 @@ const mongoose = require("mongoose");
 const dailyNewsSchema = new mongoose.Schema(
   {
     mnId: { type: Number, required: true }, // mon_news 고유 id
-    oaId: { type: Number }, // 원문 기사 id
+    oaId: { type: String }, // 원문 기사 id
     level: { type: String, required: true },
     title: { type: String, required: true },
     body: { type: String },
