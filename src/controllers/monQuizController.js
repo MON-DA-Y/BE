@@ -207,6 +207,18 @@ exports.postMonQuizSubmit = async (req, res) => {
     { upsert: true }
   );
 
+  // progress에 오늘 퀴즈 완료 반영
+  await Progress.updateOne(
+    { studentId, "days.day": today },
+    {
+      $set: {
+        "days.$.tasks.quiz": "done",
+      },
+    },
+    { upsert: true }
+  );
+  await Progress.updateWeekCompletion(studentId, today);
+
   res.json({
     message: "오늘 Mon 퀴즈 제출 완료!",
     result: todayData.quizzes.map(({ id, isCorrect, selectedAnswer, marking, answer }) => ({

@@ -141,6 +141,19 @@ exports.postTodayMonWordDone = async (req, res) => {
     { upsert: true }
   );
 
+  // progress에 오늘 단어 완료 반영
+  await Progress.updateOne(
+    { studentId, "days.day": today },
+    {
+      $set: {
+        "days.$.tasks.word": "done",
+      },
+    },
+    { upsert: true }
+  );
+  await Progress.updateWeekCompletion(studentId, today);
+  s;
+
   // 학습 완료 처리
   res.json({ message: "오늘 Mon 단어 학습 완료!" });
 };
