@@ -1,69 +1,138 @@
+const DailyNews = require("../models/daily/dailyNews");
+const StudentNews = require("../models/monNews");
+const { formatDate } = require("../utils/date");
 const { getUserIdFromToken } = require("../utils/auth");
-const NewsHistory = require("../models/NewsHistory");
 
-// 테스트용 더미 데이터
-const dummyMonNews = [
-  {
-    id: 1,
-    studentId: 1,
-    learningDate: new Date().toISOString().split("T")[0], // 항상 오늘로 설정
-    title: "햄버거 값 또 올랐다! 인플레이션으로 물가 상승이 계속될까?",
-    body: `"요즘 햄버거 가게에 가면 깜짝 놀라는 사람들이 많아요. 작년에는 5,500원이던 햄버거 세트가 올해는 6,500원이 되었기 때문이에요. 왜 이렇게 가격이 오르는 걸까요?\n\n이것은 바로 인플레이션 때문이에요. 인플레이션은 물건 값이 전반적으로 올라가는 현상을 말해요. 요즘은 고기, 빵, 채소 같은 재료 가격도 오르고, 직원들 월급도 올라서 음식점들이 가격을 올릴 수밖에 없어요.\n\n전문가들은 \"지금은 전 세계적으로 인플레이션이 계속되고 있어요. 물가가 안정될 때까지는 가격이 더 오를 수도 있어요.\"라고 말했어요.\n\n소비자들은 \"예전에는 같은 돈으로 더 많이 먹을 수 있었는데, 이제는 부담돼요.\"라며 걱정하고 있어요.\n\n여러분도 최근에 가격이 올라서 놀란 물건이 있나요? 🤔"`,
-    summary: "최근 인플레이션 때문에 햄버거 값이 올라서 사람들이 부담을 느끼고 있어요",
-    createdAt: new Date(),
-  },
-];
+// [POST] 학생에게 오늘 뉴스 배정 (level)
+exports.assignLevelToStudent = async (req, res) => {
+  try {
+    const studentId = getUserIdFromToken(req, "student" | 1);
 
-// [get] 오늘의 monNews 조회
-exports.getTodayMonNews = (req, res) => {
-  const studentId = getUserIdFromToken(req, "student") || 1;
-  const today = new Date().toISOString().split("T")[0];
+    if (!studentId)
+      return res.status(404).json({ message: "MONDAY 유저가 아닙니다." });
 
-  const news = dummyMonNews.find(
-    (item) => item.studentId === studentId && item.createdAt === today
-  );
+    const { level } = req.body; // body에서 받도록 (params도 가능)
+    const dateStr = formatDate(new Date());
 
-  if (!news) {
-    return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
+    // ① 오늘 날짜 + 해당 레벨 뉴스 가져오기
+    // const docs = await DailyNews.find({ date: dateStr, level }).lean();
+
+    // ② 오늘 날짜 + 해당 레벨 뉴스 가져오기 (가장 최신 데이터 1개 가져오기)
+    const docs = await DailyNews.find({ level, date: dateStr }).sort({
+      date: -1,
+    });
+
+    if (!docs.length) {
+      return res
+        .status(404)
+        .json({ message: `${dateStr}의 ${level} 레벨의 뉴스 없습니다.` });
+    }
+
+    let student = await StudentNews.findOne({ studentId });
+    if (!student) {
+      const newsList = docs.map((d) => ({
+        mnId: d.mnId,
+        level: d.level,
+        title: d.title,
+        body: d.body,
+        summary: d.summary,
+        imgUrl: d.imgUrl,
+        completed: false,
+        learningDate: null,
+        assignedAt: new Date(), // 오늘 날짜 추가
+      }));
+      student = await StudentNews.create({ studentId, newsList });
+      return res.json({
+        message: "오늘 뉴스가 배정되었습니다.",
+        count: newsList.length,
+      });
+    }
+
+    // 이미 저장된 뉴스와 비교 → 중복 제거
+    const existIds = new Set(student.newsList.map((n) => n.mnId));
+    const newItems = docs
+      .filter((d) => !existIds.has(d.mnId))
+      .map((d) => ({
+        mnId: d.mnId,
+        level: d.level,
+        title: d.title,
+        body: d.body,
+        summary: d.summary,
+        imgUrl: d.imgUrl,
+        completed: false,
+        learningDate: null,
+        assignedAt: new Date(), // 오늘 날짜
+      }));
+
+    if (newItems.length) {
+      student.newsList.push(...newItems);
+      await student.save();
+    }
+
+    res.json({
+      message: "오늘 뉴스가 배정되었습니다.",
+      added: newItems.length,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "뉴스 배정 실패" });
   }
-
-  res.json({
-    result: {
-      id: news.id,
-      title: news.title,
-      body: news.body,
-      summary: news.summary,
-    },
-  });
 };
 
-// [post] 오늘의 monNews 완료
-exports.postTodayMonNewsDone = async (req, res) => {
+// [GET] 오늘의 monNews 조회
+exports.getTodayMonNews = async (req, res) => {
   try {
-    const studentId = getStudentIdFromToken(req) || 1; // 테스트용 디폴트
-    const today = new Date().toISOString().split("T")[0];
-    const { newsId } = req.body;
+    const studentId = getUserIdFromToken(req, "student") || 1;
+    const today = formatDate(new Date());
 
-    // 뉴스 히스토리에 학습 기록 추가
-    await NewsHistory.updateOne(
-      { studentId },
-      {
-        $push: {
-          newsList: {
-            newsId,
-            title,
-            imgUrl,
-            category,
-            learningDate: today,
-            isCorrect: null,
-          },
-        },
-      },
-      { upsert: true }
+    const student = await StudentNews.findOne({ studentId }).lean();
+    if (!student)
+      return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
+
+    const todayNews = student.newsList.filter(
+      (item) => formatDate(item.assignedAt) === today
     );
 
-    // console.log(`학생 ${studentId}의 ${today} 뉴스 학습 완료!`);
-    res.json({ message: "오늘 MON 뉴스 학습 완료!", learningDate: today });
+    if (!todayNews.length)
+      return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
+
+    res.json({
+      result: todayNews.map((news) => ({
+        id: news.mnId,
+        title: news.title,
+        body: news.body,
+        summary: news.summary,
+        imgUrl: news.imgUrl,
+        level: news.level,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "오늘 뉴스 조회 실패" });
+  }
+};
+
+// [POST] 오늘의 monNews 완료 처리
+exports.postTodayMonNewsDone = async (req, res) => {
+  try {
+    const studentId = getUserIdFromToken(req, "student") || 1;
+    const { newsId } = req.body;
+
+    const result = await StudentNews.updateOne(
+      { studentId, "newsList.mnId": newsId },
+      {
+        $set: {
+          "newsList.$.completed": true,
+          "newsList.$.learningDate": new Date(),
+        },
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(404).json({ message: "뉴스를 찾을 수 없습니다." });
+    }
+
+    res.json({ message: "오늘 MON 뉴스 학습 완료!" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "뉴스 학습 완료 처리 실패" });
