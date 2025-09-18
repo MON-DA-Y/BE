@@ -1,7 +1,7 @@
 require("dotenv").config();
 const app = require("./app");
 const connectMongoose = require("./config/db"); // MongoDB 연결
-require("./cron"); // 스케줄러 등록
+require("./cron/dailyNewsCron"); // 스케줄러 등록
 
 (async () => {
   try {
