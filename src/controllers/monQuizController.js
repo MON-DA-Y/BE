@@ -1,4 +1,6 @@
-const jwt = require("jsonwebtoken");
+//const jwt = require("jsonwebtoken");
+const { getUserIdFromToken } = require("../utils/auth");
+const QuizResult = require("../models/quizResult");
 
 // 테스트용 더미 데이터
 const dummyMonQuiz = [
@@ -32,20 +34,6 @@ const dummyMonQuiz = [
   },
 ];
 
-// 토큰에서 studentId 추출
-const getStudentIdFromToken = (req) => {
-  const authHeader = req.headers["authorization"];
-  if (!authHeader) return null;
-
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return decoded.studentId;
-  } catch (err) {
-    console.error(err);
-  }
-};
-
 // mon_quiz_id로 category 가져오기
 const getCategoryByQuiz = async (mq_id) => {
   const result = await MonQuiz.aggregate([
@@ -78,7 +66,7 @@ const getCategoryByQuiz = async (mq_id) => {
 
 // [get] 오늘의 monQuiz 조회
 exports.getTodayMonQuiz = (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
+  const studentId = getUserIdFromToken(req, "student");
   const today = new Date().toISOString().split("T")[0];
 
   // 오늘 데이터 찾기
@@ -107,7 +95,7 @@ exports.getTodayMonQuiz = (req, res) => {
 
 // [post] 오늘의 MonQuiz 제출
 exports.postMonQuizSubmit = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
+  const studentId = getUserIdFromToken(req, "student");
   const today = new Date().toISOString().split("T")[0];
 
   // 오늘 데이터 찾기
@@ -238,7 +226,7 @@ exports.postMonQuizSubmit = async (req, res) => {
 
 // [get] 오늘의 monQuiz 채점 조회
 exports.getTodayMonQuizMark = (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
+  const studentId = getUserIdFromToken(req, "student");
   const today = new Date().toISOString().split("T")[0];
 
   // 오늘 데이터 찾기
@@ -277,7 +265,7 @@ exports.getTodayMonQuizMark = (req, res) => {
 
 // [post] 오늘의 monQuiz 채점 학습/확인 완료
 exports.postTodayMonQuizMarkDone = (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
+  const studentId = getUserIdFromToken(req, "student");
   const today = new Date().toISOString().split("T")[0];
 
   // 오늘 데이터 찾기
@@ -301,7 +289,7 @@ exports.postTodayMonQuizMarkDone = (req, res) => {
 
 // [get] 학생이 제출했는지 여부
 exports.getStudentSubmit = (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
+  const studentId = getUserIdFromToken(req, "student");
   const today = new Date().toISOString().split("T")[0];
 
   // 오늘 데이터 찾기
