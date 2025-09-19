@@ -42,6 +42,7 @@ exports.getProgressByWeek = async (req, res) => {
 
     const { weekStart, weekEnd } = getWeekRange(weekQuery);
 
+    // 나중에 날짜 오류 나면 format 함수 넣기
     const progressInWeek = progress.days.filter((n) => {
       const progressDayStr = new Date(n.day).toISOString().split("T")[0];
       const weekStartStr = weekStart.toISOString().split("T")[0];

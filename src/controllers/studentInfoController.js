@@ -88,6 +88,30 @@ exports.getStudentInfo = async (req, res) => {
   }
 };
 
+exports.getStudentInfoById = async (req, res) => {
+  const { studentId } = req.params;
+
+  try {
+    const student = await Student.findById(studentId).select("-password");
+    if (!student) return res.status(404).json({ message: "학생 정보가 없습니다." });
+
+    const responseStdInfo = {
+      std_id: student.id,
+      std_name: student.name,
+      std_level: getLevelLabel(student.level || 1),
+      std_img: student.img || "",
+      std_email: student.email,
+      std_schoolType: student.schoolType,
+      std_grade: student.grade,
+    };
+
+    res.json({ result: responseStdInfo });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+};
+
 exports.getStudentByEmail = async (req, res) => {
   const { email } = req.query; //
   try {
