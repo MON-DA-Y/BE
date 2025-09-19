@@ -1,7 +1,12 @@
 const mongoose = require("mongoose");
 
 const studentNewsSchema = new mongoose.Schema({
-  studentId: { type: Number, required: true, index: true },
+  studentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Student",
+    required: true,
+    index: true,
+  },
   newsList: [
     {
       mnId: { type: Number, required: true },
