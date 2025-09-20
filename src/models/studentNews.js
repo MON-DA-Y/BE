@@ -10,6 +10,7 @@ const studentNewsSchema = new mongoose.Schema({
   newsList: [
     {
       mnId: { type: Number, required: true },
+      category: { type: String },
       level: { type: String, required: true },
       title: { type: String },
       body: { type: String },
