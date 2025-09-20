@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const Progress = require("../models/progress");
 
 // 테스트용 더미 데이터
 const dummyMonWord = [
@@ -142,17 +143,27 @@ exports.postTodayMonWordDone = async (req, res) => {
   );
 
   // progress에 오늘 단어 완료 반영
-  await Progress.updateOne(
-    { studentId, "days.day": today },
-    {
-      $set: {
-        "days.$.tasks.word": "done",
-      },
-    },
-    { upsert: true }
-  );
+  let progress = await Progress.findOne({ studentId });
+  if (!progress) {
+    // 없으면 새로 생성
+    progress = await Progress.create({
+      studentId,
+      days: [{ day: today, tasks: { news: "done" } }],
+    });
+  } else {
+    // 오늘 날짜 데이터 확인
+    let todayData = progress.days.find((d) => d.day.toISOString().split("T")[0] === today);
+    if (!todayData) {
+      todayData = { day: today, tasks: { news: "done" } };
+      progress.days.push(todayData);
+    } else {
+      todayData.tasks.news = "done";
+    }
+    await progress.save();
+  }
+  // strikeDay 및 weekCompletionRate 갱신
   await Progress.updateStrikeDay(studentId, today);
-  s;
+  await Progress.updateWeekCompletionRate(studentId);
 
   // 학습 완료 처리
   res.json({ message: "오늘 Mon 단어 학습 완료!" });
