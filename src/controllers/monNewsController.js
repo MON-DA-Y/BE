@@ -5,7 +5,7 @@ const { formatDate } = require("../utils/date");
 const { getUserIdFromToken } = require("../utils/auth");
 
 // [POST] 학생에게 오늘 뉴스 배정 (level)
-exports.assignLevelToStudent = async (req, res) => {
+exports.assignNewsToStudent = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student");
 
@@ -34,7 +34,7 @@ exports.assignLevelToStudent = async (req, res) => {
     if (!docs.length) {
       return res
         .status(404)
-        .json({ message: `${dateStr}의 ${level} 레벨의 뉴스 없습니다.` });
+        .json({ message: `${dateStr}의 ${level} 레벨의 뉴스가 없습니다.` });
     }
 
     let student = await StudentNews.findOne({ studentId });
