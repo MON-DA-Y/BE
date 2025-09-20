@@ -14,8 +14,8 @@ const wordItemSchema = new mongoose.Schema(
 const dailyWordSchema = new mongoose.Schema({
   date: { type: String, required: true, index: true }, // YYYY-MM-DD
   mnId: { type: Number, required: true, unique: true }, // mn_id (monNews id) 외래키
-  oaId: { type: Number },
-  level: { type: Number },
+  oaId: { type: String }, // 원문 기사 id
+  level: { type: String },
   inputAt: { type: Date, required: true },
   words: [wordItemSchema], // monWord item 리스트
 });
