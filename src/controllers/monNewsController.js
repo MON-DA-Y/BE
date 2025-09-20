@@ -1,5 +1,5 @@
 const DailyNews = require("../models/daily/dailyNews");
-const StudentNews = require("../models/monNews");
+const StudentNews = require("../models/studentNews");
 const Student = require("../models/student");
 const { formatDate } = require("../utils/date");
 const { getUserIdFromToken } = require("../utils/auth");
