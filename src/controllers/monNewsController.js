@@ -163,35 +163,3 @@ exports.postTodayMonNewsDone = async (req, res) => {
     res.status(500).json({ message: "뉴스 학습 완료 처리 실패" });
   }
 };
-
-exports.getMonNewsSubmit = async (req, res) => {
-  try {
-    const studentId = getUserIdFromToken(req, "student") || 1;
-    const today = formatDate(new Date());
-
-    const student = await StudentNews.findOne({ studentId }).lean();
-    if (!student)
-      return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
-
-    const todayNews = student.newsList.filter(
-      (item) => formatDate(item.assignedAt) === today
-    );
-
-    if (!todayNews.length)
-      return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
-
-    res.json({
-      result: todayNews.map((news) => ({
-        id: news.mnId,
-        title: news.title,
-        body: news.body,
-        summary: news.summary,
-        imgUrl: news.imgUrl,
-        level: news.level,
-      })),
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "오늘 뉴스 조회 실패" });
-  }
-};
