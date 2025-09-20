@@ -1,6 +1,3 @@
-const { response } = require("express");
-const jwt = require("jsonwebtoken");
-
 // 테스트용 더미 데이터
 // monWord
 const dummyMonWord = [
@@ -29,34 +26,6 @@ const dummyMonWord = [
   },
 ];
 
-// monNews
-const dummyMonNews = [
-  {
-    id: 1,
-    studentId: 123,
-    learningDate: new Date().toISOString().split("T")[0], // 항상 오늘로 설정
-    title: "햄버거 값 또 올랐다! 인플레이션으로 물가 상승이 계속될까?",
-    body: `"요즘 햄버거 가게에 가면 깜짝 놀라는 사람들이 많아요. 작년에는 5,500원이던 햄버거 세트가 올해는 6,500원이 되었기 때문이에요. 왜 이렇게 가격이 오르는 걸까요?\n\n이것은 바로 인플레이션 때문이에요. 인플레이션은 물건 값이 전반적으로 올라가는 현상을 말해요. 요즘은 고기, 빵, 채소 같은 재료 가격도 오르고, 직원들 월급도 올라서 음식점들이 가격을 올릴 수밖에 없어요.\n\n전문가들은 \"지금은 전 세계적으로 인플레이션이 계속되고 있어요. 물가가 안정될 때까지는 가격이 더 오를 수도 있어요.\"라고 말했어요.\n\n소비자들은 \"예전에는 같은 돈으로 더 많이 먹을 수 있었는데, 이제는 부담돼요.\"라며 걱정하고 있어요.\n\n여러분도 최근에 가격이 올라서 놀란 물건이 있나요? 🤔"`,
-    summary:
-      "최근 인플레이션 때문에 햄버거 값이 올라서 사람들이 부담을 느끼고 있어요",
-    createdAt: new Date().toISOString().split("T")[0],
-  },
-];
-
-// 토큰에서 studentId 추출
-const getStudentIdFromToken = (req) => {
-  const authHeader = req.headers["authorization"];
-  if (!authHeader) return null;
-
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return decoded.studentId;
-  } catch (err) {
-    console.error(err);
-  }
-};
-
 // [get] 학생 메인 monWord 조회
 exports.getStdMonWord = (req, res) => {
   const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
@@ -81,23 +50,63 @@ exports.getStdMonWord = (req, res) => {
   });
 };
 
-// [get] 학생 메인 monNews 조회
-exports.getStdMonNews = (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
-  const today = new Date().toISOString().split("T")[0];
+const jwt = require("jsonwebtoken");
+const StudentNews = require("../models/monNews");
+const { formatDate } = require("../utils/date");
 
-  // 오늘 데이터 찾기
-  const todayNews = dummyMonNews.find(
-    (item) => item.studentId === studentId && item.createdAt === today
-  );
+// 토큰에서 studentId 추출
+const getStudentIdFromToken = (req) => {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader) return null;
 
-  if (!todayNews) {
-    return res.status(404).json({
-      message: "오늘 뉴스가 아직 생성되지 않았습니다. 재접속 해주세요.",
-    });
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return decoded.studentId;
+  } catch (err) {
+    console.error("토큰 검증 실패:", err);
+    return null;
   }
+};
 
-  res.json({
-    result: todayNews.title,
-  });
+// [GET] 학생 메인 monWord 조회 (임시: 더미 유지)
+exports.getStdMonWord = (req, res) => {
+  return res
+    .status(501)
+    .json({ message: "monWord API는 아직 구현되지 않았습니다." });
+};
+
+// [GET] 학생 메인 monNews 조회
+exports.getStdMonNews = async (req, res) => {
+  try {
+    const studentId = getStudentIdFromToken(req);
+    if (!studentId) {
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+    }
+
+    const today = formatDate(new Date());
+
+    // 학생 뉴스 조회
+    const student = await StudentNews.findOne({ studentId }).lean();
+    if (!student) {
+      return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
+    }
+
+    // 오늘 할당된 뉴스만 필터링
+    const todayNews = student.newsList.filter(
+      (item) => formatDate(item.assignedAt) === today
+    );
+
+    if (!todayNews.length) {
+      return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
+    }
+
+    // 학생 메인에서는 뉴스 제목만 내려줌
+    res.json({
+      result: todayNews[0].title,
+    });
+  } catch (err) {
+    console.error("getStdMonNews 에러:", err);
+    res.status(500).json({ message: "오늘 뉴스 조회 실패" });
+  }
 };
