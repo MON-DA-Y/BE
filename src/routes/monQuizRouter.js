@@ -7,6 +7,7 @@ const {
   getTodayMonQuizMark,
   postTodayMonQuizMarkDone,
   getStudentSubmit,
+  getMonQuizActive,
 } = require("../controllers/monQuizController");
 
 // 오늘 퀴즈 배정
@@ -26,5 +27,8 @@ router.post("/monQuiz/done", postTodayMonQuizMarkDone);
 
 // mon퀴즈 제출 여부
 router.get("/monQuiz/submit/status", getStudentSubmit);
+
+// mon퀴즈 활성화 여부
+router.get("/monQuiz/active/status", getMonQuizActive);
 
 module.exports = router;

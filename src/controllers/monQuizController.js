@@ -3,6 +3,8 @@ const Progress = require("../models/progress");
 const QuizResult = require("../models/quizResult");
 const DailyQuiz = require("../models/daily/dailyQuiz");
 const StudentQuiz = require("../models/studentQuiz");
+const StudentNews = require("../models/studentNews");
+const StudentWord = require("../models/studentWord");
 const Student = require("../models/student");
 const { formateDate, getWeekRange, formatDate } = require("../utils/date");
 const { Weakness } = require("../models/weakness");
@@ -395,5 +397,40 @@ exports.getStudentSubmit = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "학생 제출 여부 조회 실패" });
+  }
+};
+
+// [GET] monQuiz 활성화 여부 조회
+exports.getMonQuizActive = async (req, res) => {
+  try {
+    const studentId = getUserIdFromToken(req, "student");
+    if (!studentId)
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+
+    const today = formatDate(new Date());
+
+    // 오늘 할당된 뉴스 조회
+    const studentNews = await StudentNews.findOne({ studentId }).lean();
+    const todayNews =
+      studentNews?.newsList?.filter(
+        (item) => formatDate(item.assignedAt) === today
+      ) || [];
+    const allNewsCompleted = todayNews.every((news) => news.completed);
+
+    // 오늘 할당된 단어 조회
+    const studentWord = await StudentWord.findOne({ studentId }).lean();
+    const todayWords =
+      studentWord?.wordList?.filter(
+        (item) => formatDate(item.assignedAt) === today
+      ) || [];
+    const allWordsCompleted = todayWords.every((word) => word.completed);
+
+    // monQuiz 활성화 조건: 오늘 뉴스 + 단어 모두 완료
+    const isMonQuizActive = allNewsCompleted && allWordsCompleted;
+
+    return res.json({ active: isMonQuizActive });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "monQuiz 활성화 여부 조회 실패" });
   }
 };
