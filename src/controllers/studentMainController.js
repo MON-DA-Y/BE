@@ -51,7 +51,7 @@ exports.getStdMonWord = (req, res) => {
 };
 
 const jwt = require("jsonwebtoken");
-const StudentNews = require("../models/monNews");
+const StudentNews = require("../models/studentNews");
 const { formatDate } = require("../utils/date");
 
 // 토큰에서 studentId 추출

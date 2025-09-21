@@ -1,20 +1,22 @@
 const DailyNews = require("../models/daily/dailyNews");
-const StudentNews = require("../models/monNews");
-const Progress = require("../models/progress");
+const StudentNews = require("../models/studentNews");
 const Student = require("../models/student");
 const { formatDate } = require("../utils/date");
 const { getUserIdFromToken } = require("../utils/auth");
+const Progress = require("../models/progress");
 
 // [POST] 학생에게 오늘 뉴스 배정 (level)
-exports.assignLevelToStudent = async (req, res) => {
+exports.assignNewsToStudent = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student");
 
-    if (!studentId) return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+    if (!studentId)
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     // studentId로 DB에서 회원 조회 (비밀번호 제외)
     const studentInfo = await Student.findById(studentId).select("-password");
-    if (!studentInfo) return res.status(404).json({ message: "학생 정보가 없습니다." });
+    if (!studentInfo)
+      return res.status(404).json({ message: "학생 정보가 없습니다." });
 
     // 회원의 level 값 (없으면 1로 기본 세팅)
     const level = studentInfo.level || "씨앗";
@@ -31,7 +33,9 @@ exports.assignLevelToStudent = async (req, res) => {
     //   .lean();
 
     if (!docs.length) {
-      return res.status(404).json({ message: `${dateStr}의 ${level} 레벨의 뉴스 없습니다.` });
+      return res
+        .status(404)
+        .json({ message: `${dateStr}의 ${level} 레벨의 뉴스가 없습니다.` });
     }
 
     let student = await StudentNews.findOne({ studentId });
@@ -91,12 +95,20 @@ exports.getTodayMonNews = async (req, res) => {
     const studentId = getUserIdFromToken(req, "student") || 1;
     const today = formatDate(new Date());
 
+    if (!studentId)
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+
+    // 1) 학생이 이미 할당받은 단어 있는지 조회
     const student = await StudentNews.findOne({ studentId }).lean();
-    if (!student) return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
+    if (!student)
+      return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
 
-    const todayNews = student.newsList.filter((item) => formatDate(item.assignedAt) === today);
+    const todayNews = student.newsList.filter(
+      (item) => formatDate(item.assignedAt) === today
+    );
 
-    if (!todayNews.length) return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
+    if (!todayNews.length)
+      return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
 
     res.json({
       result: todayNews.map((news) => ({
@@ -145,7 +157,9 @@ exports.postTodayMonNewsDone = async (req, res) => {
       });
     } else {
       // 오늘 날짜 데이터 확인
-      let todayData = progress.days.find((d) => d.day.toISOString().split("T")[0] === today);
+      let todayData = progress.days.find(
+        (d) => d.day.toISOString().split("T")[0] === today
+      );
       if (!todayData) {
         todayData = { day: today, tasks: { news: "done" } };
         progress.days.push(todayData);
@@ -159,39 +173,8 @@ exports.postTodayMonNewsDone = async (req, res) => {
     await Progress.updateWeekCompletionRate(studentId);
 
     res.json({ message: "오늘 MON 뉴스 학습 완료!" });
-
-    // // console.log(`학생 ${studentId}의 ${today} 뉴스 학습 완료!`);
-    // res.json({ message: "오늘 MON 뉴스 학습 완료!", learningDate: today });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "뉴스 학습 완료 처리 실패" });
-  }
-};
-
-exports.getMonNewsSubmit = async (req, res) => {
-  try {
-    const studentId = getUserIdFromToken(req, "student") || 1;
-    const today = formatDate(new Date());
-
-    const student = await StudentNews.findOne({ studentId }).lean();
-    if (!student) return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
-
-    const todayNews = student.newsList.filter((item) => formatDate(item.assignedAt) === today);
-
-    if (!todayNews.length) return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
-
-    res.json({
-      result: todayNews.map((news) => ({
-        id: news.mnId,
-        title: news.title,
-        body: news.body,
-        summary: news.summary,
-        imgUrl: news.imgUrl,
-        level: news.level,
-      })),
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "오늘 뉴스 조회 실패" });
   }
 };
