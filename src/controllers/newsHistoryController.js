@@ -1,5 +1,5 @@
 const { getUserIdFromToken } = require("../utils/auth");
-const StudentNews = require("../models/monNews");
+const StudentNews = require("../models/studentNews");
 const { getWeekRange } = require("../utils/week");
 
 // 뉴스 히스토리 조회
@@ -9,7 +9,10 @@ exports.getNewsHistory = async (req, res) => {
 
   try {
     const newsData = await StudentNews.findOne({ studentId });
-    if (!newsData) return res.status(404).json({ message: "해당 학생의 뉴스 데이터가 없습니다." });
+    if (!newsData)
+      return res
+        .status(404)
+        .json({ message: "해당 학생의 뉴스 데이터가 없습니다." });
 
     const { weekStart, weekEnd } = getWeekRange(weekQuery);
 
