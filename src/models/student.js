@@ -1,13 +1,17 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
-const studentSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  schoolType: { type: String, enum: ["middle", "high"], required: true },
-  grade: { type: Number, required: true },
-});
+const studentSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    schoolType: { type: String, enum: ["middle", "high"], required: true },
+    grade: { type: Number, required: true },
+    level: { type: Number, default: 1 },
+  },
+  { timestamps: true } // 가입일자 구하려고 추가함
+);
 
 // 비밀번호 해시
 studentSchema.pre("save", async function (next) {

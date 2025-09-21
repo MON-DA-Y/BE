@@ -18,6 +18,7 @@ const progressSchema = new mongoose.Schema({
 });
 
 // 다 완료하면 strikeDay +1
+// strikeDay 다음주되면 리셋하는 거 추후에 수정
 progressSchema.statics.updateStrikeDay = async function (studentId, today) {
   const progress = await this.findOne({ studentId });
   if (!progress) return;
