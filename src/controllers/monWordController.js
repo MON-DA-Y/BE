@@ -5,6 +5,7 @@ const StudentWord = require("../models/studentWord");
 const Student = require("../models/student");
 const { formatDate } = require("../utils/date");
 const { getUserIdFromToken } = require("../utils/auth");
+const { Types } = require("mongoose");
 
 // [POST] 학생에게 오늘 단어 배정 (level)
 exports.assignWordToStudent = async (req, res) => {
@@ -15,16 +16,21 @@ exports.assignWordToStudent = async (req, res) => {
       return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     // studentId로 DB에서 회원 조회 (비밀번호 제외)
-    const studentInfo = await Student.fineById(studentId).select("-password");
+    const studentInfo = await Student.findById(studentId).select("-password");
     if (!studentInfo)
       return res.status(404).json({ message: "학생 정보가 없습니다." });
 
     // 회원의 level 값 (없으면 1로 기본 세팅)
     const level = studentInfo.level || "씨앗";
-    const dateStr = formatDate(new Date());
+    const today = new Date();
+    const start = new Date(today.setHours(0, 0, 0, 0));
+    const end = new Date(today.setHours(23, 59, 59, 999));
 
-    // 오늘 날짜 + 해당 레벨 뉴스 가져오기
-    const docs = await DailyWord.find({ date: dateStr, level }).lean();
+    // 오늘 날짜 + 해당 레벨 단어 가져오기
+    const docs = await DailyWord.find({
+      level,
+      inputAt: { $gte: start, $lte: end },
+    }).lean();
 
     if (!docs.length) {
       return res
@@ -34,37 +40,41 @@ exports.assignWordToStudent = async (req, res) => {
 
     let student = await StudentWord.findOne({ studentId });
     if (!student) {
-      const wordList = docs.map((d) => ({
-        mwId: d.mwiId,
-        word: d.word,
-        meaning: d.meaning,
-        practice: d.practice,
-        understand: d.understand,
-        completed: false,
-        learningDate: null,
-        assignedAt: new Date(), // 오늘 날짜 추가
-      }));
+      const wordList = docs.flatMap((d) =>
+        d.words.map((w) => ({
+          mwiId: w.mwiId,
+          word: w.word,
+          meaning: w.meaning,
+          practice: w.practice,
+          understand: false,
+          completed: false,
+          learningDate: null,
+          assignedAt: new Date(),
+        }))
+      );
+
       student = await StudentWord.create({ studentId, wordList });
       return res.json({
         message: "오늘 단어가 배정되었습니다.",
         count: wordList.length,
       });
     }
-
     // 이미 저장된 단어와 비교 → 중복 제거
     const existIds = new Set(student.wordList.map((n) => n.mwiId));
-    const newItems = docs
-      .filter((d) => !existIds.has(d.mwiId))
-      .map((d) => ({
-        mwId: d.mwiId,
-        word: d.word,
-        meaning: d.meaning,
-        practice: d.practice,
-        understand: d.understand,
-        completed: false,
-        learningDate: null,
-        assignedAt: new Date(), // 오늘 날짜
-      }));
+    const newItems = docs.flatMap((d) =>
+      (d.words || [])
+        .filter((w) => !existIds.has(w.mwiId)) // 중복 제거
+        .map((w) => ({
+          mwiId: w.mwiId,
+          word: w.word,
+          meaning: w.meaning,
+          practice: w.practice || "",
+          understand: false,
+          completed: false,
+          learningDate: null,
+          assignedAt: new Date(),
+        }))
+    );
 
     if (newItems.length) {
       student.wordList.push(...newItems);
@@ -77,7 +87,7 @@ exports.assignWordToStudent = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "뉴스 배정 실패" });
+    res.status(500).json({ message: "단어 배정 실패" });
   }
 };
 
@@ -133,36 +143,40 @@ exports.getTodayMonWord = async (req, res) => {
 // 단어 이해 완료 처리
 exports.postWordItemUnderstand = async (req, res) => {
   try {
-    const studentId = getUserIdFromToken(req);
-    if (!studentId) return res.status(401).json({ message: "인증 필요" });
+    const studentId = new Types.ObjectId(getUserIdFromToken(req, "student"));
+
+    if (!studentId)
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     const { id } = req.body;
     if (!id) return res.status(400).json({ message: "단어 ID 필요" });
 
     const result = await StudentWord.updateOne(
       { studentId, "wordList.mwiId": id },
-      {
-        $set: {
-          "wordList.$.understand": true,
-        },
-      }
+      { $set: { "wordList.$.understand": true } }
     );
+    console.log(`ID ${id} 단어 이해 처리`, result);
 
-    if (result.modifiedCount === 0)
+    if (result.matchedCount === 1)
+      return res.status(400).json({ message: "이미 이해 완료했습니다!" });
+
+    if (result.modifiedCount === 0 && result.matchedCount === 0)
       return res.status(404).json({ message: "단어를 찾을 수 없습니다." });
 
-    res.json({ message: `${wordList.mwiId} 이해 완료` });
+    res.json({ message: `단어(ID: ${id}) 이해 완료` });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "단어 학습 처리 실패" });
+    res.status(500).json({ message: "단어 이해 처리 실패" });
   }
 };
 
 // 오늘 단어 학습 완료 처리
 exports.postTodayMonWordDone = async (req, res) => {
   try {
-    const studentId = getUserIdFromToken(req);
-    if (!studentId) return res.status(401).json({ message: "인증 필요" });
+    const studentId = getUserIdFromToken(req, "student");
+
+    if (!studentId)
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     const studentWords = await StudentWord.findOne({ studentId });
     if (!studentWords)
@@ -172,13 +186,15 @@ exports.postTodayMonWordDone = async (req, res) => {
     if (!allUnderstood)
       return res.status(400).json({ message: "모든 단어를 학습해주세요." });
 
+    const today = formatDate(new Date());
+
     // 학습 완료 처리
     const result = await StudentWord.updateOne(
-      { studentId, "wordList.mwiId": id },
+      { studentId },
       {
         $set: {
-          "wordList.$.completed": true,
-          "wordList.$.learningDate": new Date(),
+          "wordList.$[].completed": true,
+          "wordList.$[].learningDate": new Date(),
         },
       }
     );
