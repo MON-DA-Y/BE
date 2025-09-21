@@ -15,7 +15,6 @@ const getUserIdFromToken = (req, type = "student") => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log({ decoded });
     if (type === "student") return decoded.studentId || null;
     if (type === "parent") return decoded.parentId || null;
     return null;

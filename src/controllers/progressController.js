@@ -47,12 +47,7 @@ exports.getProgressByWeek = async (req, res) => {
       const progressDayStr = new Date(n.day).toISOString().split("T")[0];
       const weekStartStr = weekStart.toISOString().split("T")[0];
       const weekEndStr = weekEnd.toISOString().split("T")[0];
-
-      console.log("checking day:", n.day, "progressDayStr:", progressDayStr);
-      console.log("weekStartStr:", weekStartStr, "weekEndStr:", weekEndStr);
-
       const result = progressDayStr >= weekStartStr && progressDayStr <= weekEndStr;
-      console.log("is in week?", result);
       return result;
     });
 

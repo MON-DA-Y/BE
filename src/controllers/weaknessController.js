@@ -90,3 +90,56 @@ exports.getWeaknessByWeek = async (req, res) => {
     res.status(500).json({ message: "서버 오류" });
   }
 };
+
+// 부모가 자녀 약점 조회
+exports.getStudentWeakness = async (req, res) => {
+  const studentId = req.params.studentId;
+  const weekQuery = req.query.week;
+
+  try {
+    const weakness = await DummyWeakness.findOne({ studentId: studentId });
+    if (!weakness) return res.json({ weakWord: null, weakNews: null });
+
+    function formatKSTDate(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+        date.getDate()
+      ).padStart(2, "0")}`;
+    }
+
+    const { weekStart } = getWeekRange(weekQuery);
+    const weekStartStr = formatKSTDate(weekStart);
+
+    // 임계값
+    const threshold = 50;
+
+    // week, 임계값 조건에 맞는 데이터 필터링
+    const weekWeakWord = weakness.weakWord.find((w) => w.date === weekStartStr);
+    const filteredWordCategories = weekWeakWord
+      ? weekWeakWord.categories.filter((c) => (c.correct / c.total) * 100 < threshold)
+      : [];
+
+    const weekWeakNews = weakness.weakNews.find((w) => w.date === weekStartStr);
+    const filteredNewsCategories = weekWeakNews
+      ? weekWeakNews.categories.filter((c) => (c.correct / c.total) * 100 < threshold)
+      : [];
+
+    // MySQL에서 최신 summary 조회
+    const summary = await getLatestSummary(studentId);
+
+    res.json({
+      weakWord: {
+        date: weekStartStr,
+        categories: filteredWordCategories,
+        summary_words: summary.summary_words || null,
+      },
+      weakNews: {
+        date: weekStartStr,
+        categories: filteredNewsCategories,
+        summary_news: summary.summary_news || null,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+};
