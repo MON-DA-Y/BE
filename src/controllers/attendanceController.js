@@ -66,7 +66,7 @@ exports.getStudentAttendance = async (req, res) => {
   const weekQuery = req.query.week;
 
   try {
-    const attendance = await Attendance.findOne({ studentId });
+    const attendance = await Attendance.findOne({ studentId: studentId });
     if (!attendance) return res.json({ days: [] });
 
     const { weekStart, weekEnd } = getWeekRange(weekQuery);

@@ -1,5 +1,5 @@
 const { getUserIdFromToken } = require("../utils/auth");
-const StudentNews = require("../models/monNews");
+const StudentNews = require("../models/studentNews");
 const { getWeekRange } = require("../utils/week");
 
 // 뉴스 히스토리 조회
