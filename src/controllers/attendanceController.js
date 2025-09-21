@@ -1,6 +1,7 @@
 const { getUserIdFromToken } = require("../utils/auth");
 const Attendance = require("../models/attendance");
 const { getWeekRange } = require("../utils/week");
+const { ObjectId } = require("mongodb");
 
 function formatKSTDate(date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
@@ -66,7 +67,7 @@ exports.getStudentAttendance = async (req, res) => {
   const weekQuery = req.query.week;
 
   try {
-    const attendance = await Attendance.findOne({ studentId });
+    const attendance = await Attendance.findOne({ studentId: studentId });
     if (!attendance) return res.json({ days: [] });
 
     const { weekStart, weekEnd } = getWeekRange(weekQuery);
