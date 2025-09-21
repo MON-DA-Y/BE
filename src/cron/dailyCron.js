@@ -28,6 +28,7 @@
 const {
   syncDailyNewsForDate,
   syncDailyWordsForDate,
+  syncDailyQuizForDate,
 } = require("../services/syncService");
 const { formatDate } = require("../utils/date");
 
@@ -40,6 +41,9 @@ syncDailyWordsForDate(today)
   .then((res) => console.log(`${today} 단어 동기화 완료:`, res))
   .catch((err) => console.error(err));
 
+syncDailyQuizForDate(today)
+  .then((res) => console.log(`${today} 퀴즈 동기화 완료:`, res))
+  .catch((err) => console.error(err));
 // // 테스트용 (2025-09-17 >> 원하는 날짜 가져오기)
 // const { syncDailyNewsForDate } = require("../services/syncService");
 
