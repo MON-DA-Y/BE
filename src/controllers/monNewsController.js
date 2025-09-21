@@ -94,6 +94,10 @@ exports.getTodayMonNews = async (req, res) => {
     const studentId = getUserIdFromToken(req, "student") || 1;
     const today = formatDate(new Date());
 
+    if (!studentId)
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+
+    // 1) 학생이 이미 할당받은 단어 있는지 조회
     const student = await StudentNews.findOne({ studentId }).lean();
     if (!student)
       return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
