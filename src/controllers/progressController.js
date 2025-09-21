@@ -1,7 +1,6 @@
 const { getUserIdFromToken } = require("../utils/auth");
 const Progress = require("../models/progress");
 const { getWeekRange } = require("../utils/week");
-const { ObjectId } = require("mongodb");
 
 const DummyProgress = {
   findOne: async ({ studentId }) => {
