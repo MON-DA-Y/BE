@@ -15,7 +15,7 @@ exports.assignWordToStudent = async (req, res) => {
       return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     // studentId로 DB에서 회원 조회 (비밀번호 제외)
-    const studentInfo = await Student.fineById(studentId).select("-password");
+    const studentInfo = await Student.findById(studentId).select("-password");
     if (!studentInfo)
       return res.status(404).json({ message: "학생 정보가 없습니다." });
 
