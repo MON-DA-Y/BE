@@ -2,6 +2,7 @@
 const mysqlPool = require("../config/mysql");
 const DailyNews = require("../models/daily/dailyNews");
 const DailyWord = require("../models/daily/dailyWord");
+const DailyQuiz = require("../models/daily/dailyQuiz");
 
 // 뉴스 동기화
 async function syncDailyNewsForDate(dateStr) {
@@ -132,4 +133,69 @@ async function syncDailyWordsForDate(dateStr) {
   }
 }
 
-module.exports = { syncDailyNewsForDate, syncDailyWordsForDate };
+// 퀴즈 동기화
+async function syncDailyQuizForDate(dateStr) {
+  const conn = await mysqlPool.getConnection();
+  try {
+    const [rows] = await conn.execute(
+      `
+      SELECT mq.mq_id AS mqId, mq.mn_id AS mnId, mn.oa_id AS oaId, mn.level, mq.input_at,
+             mqi.mqi_id AS mqiId, mqi.question, mqi.choices, mqi.answer, mqi.explanation AS marking,
+             mqi.source, mqi.position
+      FROM mon_quiz mq
+      JOIN mon_quiz_items mqi ON mq.mq_id = mqi.mq_id
+      JOIN mon_news mn ON mq.mn_id = mn.mn_id
+      WHERE DATE(mq.input_at) = ?
+      ORDER BY mq.mq_id, mqi.position
+      `,
+      [dateStr]
+    );
+
+    if (!rows.length) return { inserted: 0 };
+
+    // mqId별로 그룹화
+    const grouped = rows.reduce((acc, row) => {
+      const { mqId, mnId, level, oaId } = row;
+      if (!acc[mqId]) acc[mqId] = { mqId, mnId, level, quizzes: [] };
+      acc[mqId].quizzes.push({
+        mqiId: row.mqiId,
+        question: row.question,
+        choices: JSON.parse(row.choices),
+        answer: row.answer,
+        marking: row.marking,
+        source: row.source,
+        position: row.position,
+      });
+      return acc;
+    }, {});
+
+    // bulkWrite 준비
+    const ops = Object.values(grouped).map((doc) => ({
+      updateOne: {
+        filter: { date: dateStr, mqId: doc.mqId },
+        update: {
+          $set: {
+            date: dateStr,
+            mqId: doc.mqId,
+            mnId: doc.mnId,
+            level: doc.level,
+            quizzes: doc.quizzes,
+            updatedAt: new Date(),
+          },
+        },
+        upsert: true,
+      },
+    }));
+
+    const res = await DailyQuiz.bulkWrite(ops);
+    return res;
+  } finally {
+    conn.release();
+  }
+}
+
+module.exports = {
+  syncDailyNewsForDate,
+  syncDailyWordsForDate,
+  syncDailyQuizForDate,
+};
