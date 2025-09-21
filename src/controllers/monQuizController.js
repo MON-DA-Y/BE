@@ -1,5 +1,6 @@
 //const jwt = require("jsonwebtoken");
 const { getUserIdFromToken } = require("../utils/auth");
+const Progress = require("../models/progress");
 const QuizResult = require("../models/quizResult");
 
 // 테스트용 더미 데이터
@@ -199,16 +200,27 @@ exports.postMonQuizSubmit = async (req, res) => {
   );
 
   // progress에 오늘 퀴즈 완료 반영
-  await Progress.updateOne(
-    { studentId, "days.day": today },
-    {
-      $set: {
-        "days.$.tasks.quiz": "done",
-      },
-    },
-    { upsert: true }
-  );
+  let progress = await Progress.findOne({ studentId });
+  if (!progress) {
+    // 없으면 새로 생성
+    progress = await Progress.create({
+      studentId,
+      days: [{ day: today, tasks: { news: "done" } }],
+    });
+  } else {
+    // 오늘 날짜 데이터 확인
+    let todayData = progress.days.find((d) => d.day.toISOString().split("T")[0] === today);
+    if (!todayData) {
+      todayData = { day: today, tasks: { news: "done" } };
+      progress.days.push(todayData);
+    } else {
+      todayData.tasks.news = "done";
+    }
+    await progress.save();
+  }
+  // strikeDay 및 weekCompletionRate 갱신
   await Progress.updateStrikeDay(studentId, today);
+  await Progress.updateWeekCompletionRate(studentId);
 
   res.json({
     message: "오늘 Mon 퀴즈 제출 완료!",

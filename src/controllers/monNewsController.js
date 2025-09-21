@@ -3,6 +3,7 @@ const StudentNews = require("../models/studentNews");
 const Student = require("../models/student");
 const { formatDate } = require("../utils/date");
 const { getUserIdFromToken } = require("../utils/auth");
+const Progress = require("../models/progress");
 
 // [POST] 학생에게 오늘 뉴스 배정 (level)
 exports.assignNewsToStudent = async (req, res) => {
@@ -130,6 +131,7 @@ exports.postTodayMonNewsDone = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student") || 1;
     const { newsId } = req.body;
+    const today = formatDate(new Date());
 
     const result = await StudentNews.updateOne(
       { studentId, "newsList.mnId": newsId },
@@ -145,23 +147,32 @@ exports.postTodayMonNewsDone = async (req, res) => {
       return res.status(404).json({ message: "뉴스를 찾을 수 없습니다." });
     }
 
+    // progress에 오늘 뉴스 완료 반영
+    let progress = await Progress.findOne({ studentId });
+    if (!progress) {
+      // 없으면 새로 생성
+      progress = await Progress.create({
+        studentId,
+        days: [{ day: today, tasks: { news: "done" } }],
+      });
+    } else {
+      // 오늘 날짜 데이터 확인
+      let todayData = progress.days.find(
+        (d) => d.day.toISOString().split("T")[0] === today
+      );
+      if (!todayData) {
+        todayData = { day: today, tasks: { news: "done" } };
+        progress.days.push(todayData);
+      } else {
+        todayData.tasks.news = "done";
+      }
+      await progress.save();
+    }
+    // strikeDay 및 weekCompletionRate 갱신
+    await Progress.updateStrikeDay(studentId, today);
+    await Progress.updateWeekCompletionRate(studentId);
+
     res.json({ message: "오늘 MON 뉴스 학습 완료!" });
-
-    // monNews 변경 사항 이었던 것
-    // // progress에 오늘 뉴스 완료 반영
-    // await Progress.updateOne(
-    //   { studentId, "days.day": today },
-    //   {
-    //     $set: {
-    //       "days.$.tasks.news": "done",
-    //     },
-    //   },
-    //   { upsert: true }
-    // );
-    // await Progress.updateStrikeDay(studentId, today);
-
-    // // console.log(`학생 ${studentId}의 ${today} 뉴스 학습 완료!`);
-    // res.json({ message: "오늘 MON 뉴스 학습 완료!", learningDate: today });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "뉴스 학습 완료 처리 실패" });

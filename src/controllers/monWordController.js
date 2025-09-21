@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const Progress = require("../models/progress");
 const DailyWord = require("../models/daily/dailyWord");
 const StudentWord = require("../models/studentWord");
 const Student = require("../models/student");
@@ -150,7 +151,7 @@ exports.postWordItemUnderstand = async (req, res) => {
     if (result.modifiedCount === 0)
       return res.status(404).json({ message: "단어를 찾을 수 없습니다." });
 
-    res.json({ message: "단어 학습 완료!" });
+    res.json({ message: `${wordList.mwiId} 이해 완료` });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "단어 학습 처리 실패" });
@@ -171,6 +172,7 @@ exports.postTodayMonWordDone = async (req, res) => {
     if (!allUnderstood)
       return res.status(400).json({ message: "모든 단어를 학습해주세요." });
 
+    // 학습 완료 처리
     const result = await StudentWord.updateOne(
       { studentId, "wordList.mwiId": id },
       {
@@ -180,6 +182,31 @@ exports.postTodayMonWordDone = async (req, res) => {
         },
       }
     );
+
+    // progress에 오늘 단어 완료 반영
+    let progress = await Progress.findOne({ studentId });
+    if (!progress) {
+      // 없으면 새로 생성
+      progress = await Progress.create({
+        studentId,
+        days: [{ day: today, tasks: { news: "done" } }],
+      });
+    } else {
+      // 오늘 날짜 데이터 확인
+      let todayData = progress.days.find(
+        (d) => d.day.toISOString().split("T")[0] === today
+      );
+      if (!todayData) {
+        todayData = { day: today, tasks: { news: "done" } };
+        progress.days.push(todayData);
+      } else {
+        todayData.tasks.news = "done";
+      }
+      await progress.save();
+    }
+    // strikeDay 및 weekCompletionRate 갱신
+    await Progress.updateStrikeDay(studentId, today);
+    await Progress.updateWeekCompletionRate(studentId);
 
     if (result.modifiedCount === 0)
       return res.status(404).json({ message: "단어를 찾을 수 없습니다." });

@@ -1,5 +1,5 @@
 const { getUserIdFromToken } = require("../utils/auth");
-//const Progress = require("../models/progress");
+const Progress = require("../models/progress");
 const { getWeekRange } = require("../utils/week");
 
 const DummyProgress = {
@@ -37,7 +37,7 @@ exports.getProgressByWeek = async (req, res) => {
   const weekQuery = req.query.week;
 
   try {
-    const progress = await DummyProgress.findOne({ studentId });
+    const progress = await Progress.findOne({ studentId });
     if (!progress) return res.status(404).json({ message: "해당 학생의 진도 데이터가 없습니다." });
 
     const { weekStart, weekEnd } = getWeekRange(weekQuery);
