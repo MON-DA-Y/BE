@@ -79,6 +79,7 @@ exports.getStudentInfo = async (req, res) => {
       std_email: student.email,
       std_schoolType: student.schoolType,
       std_grade: student.grade,
+      std_joinDate: student.createdAt.toISOString().split("T")[0], // 가입일자
     };
 
     res.json({ result: responseStdInfo });
@@ -103,6 +104,7 @@ exports.getStudentInfoById = async (req, res) => {
       std_email: student.email,
       std_schoolType: student.schoolType,
       std_grade: student.grade,
+      std_joinDate: student.createdAt.toISOString().split("T")[0],
     };
 
     res.json({ result: responseStdInfo });
@@ -113,7 +115,7 @@ exports.getStudentInfoById = async (req, res) => {
 };
 
 exports.getStudentByEmail = async (req, res) => {
-  const { email } = req.query; //
+  const { email } = req.query;
   try {
     const student = await Student.findOne({ email }).select("-password");
     if (!student) return res.status(404).json({ message: "학생을 찾을 수 없습니다." });
@@ -125,6 +127,7 @@ exports.getStudentByEmail = async (req, res) => {
       std_schoolType: student.schoolType,
       std_grade: student.grade,
       std_email: student.email,
+      std_joinDate: student.createdAt.toISOString().split("T")[0],
       _id: student._id, // 부모-자녀 연결용
     });
   } catch (err) {
