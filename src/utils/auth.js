@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const getUserIdFromToken = (req, type = "student") => {
   const authHeader = req.headers["authorization"];
   if (!authHeader) {
+    console.log("authHeader is null");
     // 토큰 없음 → 인증 실패
     return null;
   }
@@ -14,7 +15,7 @@ const getUserIdFromToken = (req, type = "student") => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+    console.log({ decoded });
     if (type === "student") return decoded.studentId || null;
     if (type === "parent") return decoded.parentId || null;
     return null;
