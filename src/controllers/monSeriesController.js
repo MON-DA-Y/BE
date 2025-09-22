@@ -46,16 +46,12 @@ exports.getAllSeries = async (req, res) => {
     });
 
     return res.status(200).json({
-      result: true,
+      result: result,
       message: "동기화된 시리즈 목록입니다.",
-      data: result,
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      result: false,
-      message: "시리즈 조회 실패",
-    });
+    return res.status(500).json({ message: "시리즈 조회 실패" });
   }
 };
 
@@ -68,15 +64,11 @@ exports.assignSeriesPartToStudent = async (req, res) => {
     // 1. 시리즈 및 해당 파트 가져오기
     const series = await Series.findOne({ msId }).lean();
     if (!series) {
-      return res
-        .status(404)
-        .json({ result: false, message: "시리즈를 찾을 수 없습니다." });
+      return res.status(404).json({ message: "시리즈를 찾을 수 없습니다." });
     }
     const part = series.articles.find((a) => a.msaId === msaId);
     if (!part) {
-      return res
-        .status(404)
-        .json({ result: false, message: "파트를 찾을 수 없습니다." });
+      return res.status(404).json({ message: "파트를 찾을 수 없습니다." });
     }
 
     // 2. 학생에게 이미 배정된 시리즈가 있는지 확인
@@ -100,9 +92,8 @@ exports.assignSeriesPartToStudent = async (req, res) => {
     }
 
     return res.status(200).json({
-      result: true,
       message: `${msId} 시리즈 ${msaId} 파트가 배정되었습니다.`,
-      data: {
+      result: {
         studentSeriesId: studentSeries._id,
         msId: series.msId,
         title: series.title,
@@ -112,8 +103,6 @@ exports.assignSeriesPartToStudent = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    return res
-      .status(500)
-      .json({ result: false, message: "시리즈 파트 배정 실패" });
+    return res.status(500).json({ message: "시리즈 파트 배정 실패" });
   }
 };
