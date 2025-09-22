@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const quizResultSchema = new mongoose.Schema({
-  studentId: { type: Number, required: true },
+  studentId: { type: String, required: true },
   results: [
     {
       quizId: { type: Number, required: true },

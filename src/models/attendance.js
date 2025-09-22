@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const attendanceSchema = new mongoose.Schema(
   {
-    studentId: { type: Number, required: true },
+    studentId: { type: String, required: true },
     days: [
       {
         day: { type: Date, required: true },

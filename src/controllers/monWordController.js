@@ -1,146 +1,230 @@
 const jwt = require("jsonwebtoken");
+const Progress = require("../models/progress");
+const DailyWord = require("../models/daily/dailyWord");
+const StudentWord = require("../models/studentWord");
+const Student = require("../models/student");
+const { formatDate } = require("../utils/date");
+const { getUserIdFromToken } = require("../utils/auth");
+const { getLevelLabel } = require("../utils/level");
+const { Types } = require("mongoose");
 
-// 테스트용 더미 데이터
-const dummyMonWord = [
-  {
-    studentId: 123,
-    createdAt: new Date().toISOString().split("T")[0], // 오늘 날짜
-    learningDate: new Date(),
-    words: [
-      {
-        id: 1,
-        understand: false,
-        word: "인플레이션",
-        explain:
-          "인플레이션은 물건 값(물가)이 전반적으로 오르는 현상이에요. 같은 돈으로 살 수 있는 게 점점 줄어드는 것과 같아요.",
-        use: "아니 작년에 500원이던 과자가 이제 800원이라고? 이거 완전 인플레이션이네!",
-      },
-      {
-        id: 2,
-        understand: false,
-        word: "디플레이션",
-        explain:
-          "디플레이션은 물건 값(물가)이 전반적으로 내려가는 현상이에요. 돈의 가치가 상대적으로 올라가요.",
-        use: "요즘 물가가 계속 떨어진대. 이거 디플레이션이야.",
-      },
-    ],
-  },
-];
-
-// 토큰에서 studentId 추출
-const getStudentIdFromToken = (req) => {
-  const authHeader = req.headers["authorization"];
-  if (!authHeader) return null;
-
-  const token = authHeader.split(" ")[1];
+// [POST] 학생에게 오늘 단어 배정 (level)
+exports.assignWordToStudent = async (req, res) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    return decoded.studentId;
+    const studentId = getUserIdFromToken(req, "student");
+
+    if (!studentId)
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+
+    // studentId로 DB에서 회원 조회 (비밀번호 제외)
+    const studentInfo = await Student.findById(studentId).select("-password");
+    if (!studentInfo)
+      return res.status(404).json({ message: "학생 정보가 없습니다." });
+
+    // 오늘 날짜 + 해당 레벨 단어 가져오기 (date 필드 기준)
+    const level = getLevelLabel(studentInfo.level);
+    const today = formatDate(new Date());
+    const docs = await DailyWord.find({ level, date: today }).lean();
+    if (!docs.length) {
+      return res
+        .status(404)
+        .json({ message: `${today}의 ${level} 레벨의 단어가 없습니다.` });
+    }
+
+    let student = await StudentWord.findOne({ studentId });
+    if (!student) {
+      const wordList = docs.flatMap((d) =>
+        d.words.map((w) => ({
+          mwiId: w.mwiId,
+          category: w.category,
+          word: w.word,
+          meaning: w.meaning,
+          practice: w.practice,
+          understand: false,
+          completed: false,
+          learningDate: null,
+          assignedAt: new Date(),
+        }))
+      );
+
+      student = await StudentWord.create({ studentId, wordList });
+      return res.json({
+        message: "오늘 단어가 배정되었습니다.",
+        count: wordList.length,
+      });
+    }
+    // 이미 저장된 단어와 비교 → 중복 제거
+    const existIds = new Set(student.wordList.map((n) => n.mwiId));
+    const newItems = docs.flatMap((d) =>
+      (d.words || [])
+        .filter((w) => !existIds.has(w.mwiId)) // 중복 제거
+        .map((w) => ({
+          mwiId: w.mwiId,
+          category: w.category,
+          word: w.word,
+          meaning: w.meaning,
+          practice: w.practice || "",
+          understand: false,
+          completed: false,
+          learningDate: null,
+          assignedAt: new Date(),
+        }))
+    );
+
+    if (newItems.length) {
+      student.wordList.push(...newItems);
+      await student.save();
+    }
+
+    res.json({
+      message: "오늘 단어가 배정되었습니다.",
+      added: newItems.length,
+    });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: "단어 배정 실패" });
   }
 };
 
-// [get] 오늘의 monWord 조회
-exports.getTodayMonWord = (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
-  const today = new Date().toISOString().split("T")[0];
+// [GET] 오늘의 monWord 조회
+exports.getTodayMonWord = async (req, res) => {
+  try {
+    const studentId = getUserIdFromToken(req, "student");
+    if (!studentId)
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
-  // 오늘 데이터 찾기
-  const todayData = dummyMonWord.find(
-    (item) => item.studentId === studentId && item.createdAt === today
-  );
+    const today = formatDate(new Date());
 
-  if (!todayData) {
-    return res.status(404).json({ message: "오늘 단어가 없습니다." });
+    // 1) 학생이 이미 할당받은 단어 있는지 조회
+    let studentWords = await StudentWord.findOne({ studentId }).lean();
+
+    if (!studentWords) {
+      const dailyWords = await DailyWord.find({ date: today }).lean();
+      if (!dailyWords.length)
+        return res.status(404).json({ message: "오늘 단어가 없습니다." });
+
+      // 3) 학생Word 생성
+      const wordList = dailyWords.flatMap((dw) =>
+        dw.words.map((w) => ({
+          mwiId: w.mwiId,
+          word: w.word,
+          meaning: w.meaning,
+          practice: w.practice,
+          position: w.position,
+          understand: false,
+          assignedAt: new Date(),
+        }))
+      );
+
+      const created = await StudentWord.create({ studentId, wordList });
+      studentWords = created.toObject();
+    }
+
+    res.json({
+      result: studentWords.wordList.map((w) => ({
+        id: w.mwiId,
+        word: w.word,
+        explain: w.meaning,
+        use: w.practice,
+        understand: w.understand,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "오늘 단어 조회 실패" });
   }
-
-  // words 배열에서 필요한 필드만 뽑아서 response
-  const responseWords = todayData.words.map(({ id, word, explain, use }) => ({
-    id,
-    word,
-    explain,
-    use,
-  }));
-
-  res.json({
-    result: responseWords,
-  });
 };
 
-// [post] word item 이해했어요
-exports.postWordItemUnderstand = (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
-  const today = new Date().toISOString().split("T")[0];
-  const { id } = req.body;
+// 단어 이해 완료 처리
+exports.postWordItemUnderstand = async (req, res) => {
+  try {
+    const studentId = new Types.ObjectId(getUserIdFromToken(req, "student"));
 
-  if (!id) {
-    return res.status(400).json({ message: "단어 ID가 필요합니다." });
+    if (!studentId)
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: "단어 ID 필요" });
+
+    const result = await StudentWord.updateOne(
+      { studentId, "wordList.mwiId": id },
+      { $set: { "wordList.$.understand": true } }
+    );
+    // console.log(`ID ${id} 단어 이해 처리`, result);
+
+    if (result.modifiedCount === 0 && result.matchedCount === 1)
+      return res.status(400).json({ message: "이미 이해 완료했습니다!" });
+
+    if (result.modifiedCount === 0 && result.matchedCount === 0)
+      return res.status(404).json({ message: "단어를 찾을 수 없습니다." });
+
+    res.json({ message: `단어(ID: ${id}) 이해 완료` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "단어 이해 처리 실패" });
   }
-
-  const todayData = dummyMonWord.find(
-    (item) => item.studentId === studentId && item.createdAt === today
-  );
-
-  if (!todayData) {
-    return res.status(404).json({ message: "오늘 단어가 없습니다." });
-  }
-
-  // words 배열에서 해당 id 찾기
-  const wordItem = todayData.words.find((w) => w.id === id);
-
-  if (!wordItem) {
-    return res.status(404).json({ message: "해당 단어를 찾을 수 없습니다." });
-  }
-
-  // understand true로 변경
-  wordItem.understand = true;
-
-  res.json({ message: "단어 학습 완료!", result: wordItem });
 };
 
-// [post] 오늘의 monWord 완료
+// 오늘 단어 학습 완료 처리
 exports.postTodayMonWordDone = async (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
-  const today = new Date().toISOString().split("T")[0];
+  try {
+    const studentId = getUserIdFromToken(req, "student");
 
-  // 오늘 데이터 찾기
-  const todayData = dummyMonWord.find(
-    (item) => item.studentId === studentId && item.createdAt === today
-  );
+    if (!studentId)
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
-  if (!todayData) {
-    return res.status(404).json({ message: "오늘 단어가 없습니다." });
-  }
+    const studentWords = await StudentWord.findOne({ studentId });
+    if (!studentWords)
+      return res.status(404).json({ message: "오늘 단어가 없습니다." });
 
-  // 모든 단어가 understand: true인지 확인
-  const allUnderstood = todayData.words.every((word) => word.understand);
+    const allUnderstood = studentWords.wordList.every((w) => w.understand);
+    if (!allUnderstood)
+      return res.status(400).json({ message: "모든 단어를 학습해주세요." });
 
-  if (!allUnderstood) {
-    return res.status(400).json({ message: "모든 단어를 학습해주세요." });
-  }
+    const today = formatDate(new Date());
 
-  // 단어 히스토리에 학습 기록 추가
-  await WordHistory.updateOne(
-    { studentId },
-    {
-      $push: {
-        words: {
-          $each: todayData.words.map((row) => ({
-            wordId: row.wordId,
-            word: row.word,
-            explain: row.meaning,
-            use: row.practice,
-            category: row.category,
-            learningDate: today,
-            isCorrect: null,
-          })),
+    // 학습 완료 처리
+    const result = await StudentWord.updateOne(
+      { studentId },
+      {
+        $set: {
+          "wordList.$[].completed": true,
+          "wordList.$[].learningDate": new Date(),
         },
-      },
-    },
-    { upsert: true }
-  );
+      }
+    );
 
-  // 학습 완료 처리
-  res.json({ message: "오늘 Mon 단어 학습 완료!" });
+    // progress에 오늘 단어 완료 반영
+    let progress = await Progress.findOne({ studentId });
+    if (!progress) {
+      // 없으면 새로 생성
+      progress = await Progress.create({
+        studentId,
+        days: [{ day: today, tasks: { word: "done" } }],
+      });
+    } else {
+      // 오늘 날짜 데이터 확인
+      let todayData = progress.days.find(
+        (d) => d.day.toISOString().split("T")[0] === today
+      );
+      if (!todayData) {
+        todayData = { day: today, tasks: { word: "done" } };
+        progress.days.push(todayData);
+      } else {
+        todayData.tasks.word = "done";
+      }
+      await progress.save();
+    }
+    // strikeDay 및 weekCompletionRate 갱신
+    await Progress.updateStrikeDay(studentId, today);
+    await Progress.updateWeekCompletionRate(studentId);
+
+    if (result.modifiedCount === 0)
+      return res.status(404).json({ message: "단어를 찾을 수 없습니다." });
+
+    res.json({ message: "오늘 Mon 단어 학습 완료!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "오늘 단어 완료 처리 실패" });
+  }
 };

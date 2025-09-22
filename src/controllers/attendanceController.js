@@ -10,7 +10,7 @@ function formatKSTDate(date) {
 
 // 오늘 출석 처리
 exports.todayAttendance = async (req, res) => {
-  const studentId = Number(getUserIdFromToken(req, "student")) || 1;
+  const studentId = getUserIdFromToken(req, "student");
   const today = new Date();
   // 오늘 날짜 문자열(KST)
   const todayStr = formatKSTDate(today);
@@ -34,7 +34,7 @@ exports.todayAttendance = async (req, res) => {
 
 // 특정 주차 출석 조회
 exports.getAttendanceByWeek = async (req, res) => {
-  const studentId = Number(getUserIdFromToken(req, "student")) || 1;
+  const studentId = getUserIdFromToken(req, "student");
   const weekQuery = req.query.week;
 
   try {
@@ -57,5 +57,33 @@ exports.getAttendanceByWeek = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "출석 조회 중 오류 발생" });
+  }
+};
+
+// 부모가 자녀 출석 조회
+exports.getStudentAttendance = async (req, res) => {
+  const studentId = req.params.studentId; // 부모가 요청할 때 자녀 ID
+  const weekQuery = req.query.week;
+
+  try {
+    const attendance = await Attendance.findOne({ studentId: studentId });
+    if (!attendance) return res.json({ days: [] });
+
+    const { weekStart, weekEnd } = getWeekRange(weekQuery);
+    const daysInWeek = [];
+
+    for (let d = new Date(weekStart); d <= weekEnd; d.setDate(d.getDate() + 1)) {
+      const dayStr = formatKSTDate(d);
+      const found = attendance.days.find((a) => formatKSTDate(new Date(a.day)) === dayStr);
+      daysInWeek.push({
+        day: dayStr,
+        isAttended: found ? found.isAttended : false,
+      });
+    }
+
+    res.json({ days: daysInWeek });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "자녀 출석 조회 중 오류 발생" });
   }
 };

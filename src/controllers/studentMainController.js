@@ -74,31 +74,52 @@ exports.getStdMonWord = async (req, res) => {
       return res.status(404).json({ message: "오늘 단어가 없습니다." });
     }
 
-  // words 배열에서 필요한 필드만 뽑아서 response
-  const responseWords = todayWords.words.map(({ word }) => word);
+    // 응답 데이터 가공
+    const responseWords = todayWords.map((w) => ({
+      id: w.mwiId,
+      word: w.word,
+    }));
 
-  res.json({
-    result: responseWords,
-  });
+    res.json({
+      result: responseWords,
+    });
+  } catch (err) {
+    console.error("getStdMonWord 에러:", err);
+    res.status(500).json({ message: "오늘 단어 조회 실패" });
+  }
 };
 
-// [get] 학생 메인 monNews 조회
-exports.getStdMonNews = (req, res) => {
-  const studentId = getStudentIdFromToken(req) || 123; // 테스트용 디폴트
-  const today = new Date().toISOString().split("T")[0];
+// [GET] 학생 메인 monNews 조회
+exports.getStdMonNews = async (req, res) => {
+  try {
+    const studentId = getUserIdFromToken(req);
+    if (!studentId) {
+      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+    }
 
-  // 오늘 데이터 찾기
-  const todayNews = dummyMonNews.find(
-    (item) => item.studentId === studentId && item.createdAt === today
-  );
+    const today = formatDate(new Date());
 
-  if (!todayNews) {
-    return res.status(404).json({
-      message: "오늘 뉴스가 아직 생성되지 않았습니다. 재접속 해주세요.",
+    // 학생 뉴스 조회
+    const student = await StudentNews.findOne({ studentId }).lean();
+    if (!student) {
+      return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
+    }
+
+    // 오늘 할당된 뉴스만 필터링
+    const todayNews = student.newsList.filter(
+      (item) => formatDate(item.assignedAt) === today
+    );
+
+    if (!todayNews.length) {
+      return res.status(404).json({ message: "오늘 뉴스가 없습니다." });
+    }
+
+    // 학생 메인에서는 뉴스 제목만 내려줌
+    res.json({
+      result: todayNews[0].title,
     });
+  } catch (err) {
+    console.error("getStdMonNews 에러:", err);
+    res.status(500).json({ message: "오늘 뉴스 조회 실패" });
   }
-
-  res.json({
-    result: todayNews.title,
-  });
 };

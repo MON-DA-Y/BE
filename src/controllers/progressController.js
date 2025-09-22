@@ -2,24 +2,105 @@ const { getUserIdFromToken } = require("../utils/auth");
 const Progress = require("../models/progress");
 const { getWeekRange } = require("../utils/week");
 
+const DummyProgress = {
+  findOne: async ({ studentId }) => {
+    return {
+      studentId,
+      weekCompletionRate: 50,
+      strikeDay: 2,
+      days: [
+        {
+          day: "2025-09-16",
+          tasks: {
+            word: "done",
+            news: "done",
+            series: "ongoing",
+            quiz: "done",
+          },
+        },
+        {
+          day: "2025-09-17",
+          tasks: {
+            word: "done",
+            news: "pending",
+            series: "pending",
+            quiz: "done",
+          },
+        },
+      ],
+    };
+  },
+};
+
 exports.getProgressByWeek = async (req, res) => {
-  const studentId = Number(getUserIdFromToken(req, "student")) || 1;
+  const studentId = getUserIdFromToken(req, "student");
   const weekQuery = req.query.week;
 
   try {
     const progress = await Progress.findOne({ studentId });
     if (!progress) return res.status(404).json({ message: "해당 학생의 진도 데이터가 없습니다." });
 
-    const { weekStart, weekEnd } = getWeekRange({ weekNumber: weekQuery });
+    const { weekStart, weekEnd } = getWeekRange(weekQuery);
 
+    // 나중에 날짜 오류 나면 format 함수 넣기
     const progressInWeek = progress.days.filter((n) => {
-      const progressDate = new Date(n.day);
-      return progressDate >= weekStart && progressDate <= weekEnd;
+      const progressDayStr = new Date(n.day).toISOString().split("T")[0];
+      const weekStartStr = weekStart.toISOString().split("T")[0];
+      const weekEndStr = weekEnd.toISOString().split("T")[0];
+      const result = progressDayStr >= weekStartStr && progressDayStr <= weekEndStr;
+      return result;
     });
+
+    console.log("progressInWeek:", progressInWeek);
 
     progressInWeek.sort((a, b) => new Date(a.day) - new Date(b.day));
 
-    res.json({ days: progressInWeek });
+    res.json({
+      weekCompletionRate: progress.weekCompletionRate,
+      strikeDay: progress.strikeDay,
+      days: progressInWeek,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+};
+
+// 부모가 학생 진도 상황 조회
+exports.getStudentProgress = async (req, res) => {
+  const studentId = req.params.studentId;
+  const weekQuery = req.query.week;
+
+  try {
+    const progress = await Progress.findOne({ studentId: studentId });
+
+    const { weekStart, weekEnd } = getWeekRange(weekQuery);
+
+    // 기본값
+    let progressInWeek = [];
+    let weekCompletionRate = 0;
+    let strikeDay = 0;
+
+    // 나중에 날짜 오류 나면 format 함수 넣기
+    if (progress) {
+      progressInWeek = progress.days.filter((n) => {
+        const progressDayStr = new Date(n.day).toISOString().split("T")[0];
+        const weekStartStr = weekStart.toISOString().split("T")[0];
+        const weekEndStr = weekEnd.toISOString().split("T")[0];
+
+        return progressDayStr >= weekStartStr && progressDayStr <= weekEndStr;
+      });
+      weekCompletionRate = progress.weekCompletionRate;
+      strikeDay = progress.strikeDay;
+    }
+
+    progressInWeek.sort((a, b) => new Date(a.day) - new Date(b.day));
+
+    res.json({
+      weekCompletionRate,
+      strikeDay,
+      days: progressInWeek,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버 오류" });

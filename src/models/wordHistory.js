@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const wordSchema = new mongoose.Schema({
-  studentId: { type: Number, required: true },
+  studentId: { type: String, required: true },
   words: [
     {
       wordId: { type: Number, required: true },

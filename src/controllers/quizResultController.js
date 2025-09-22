@@ -1,13 +1,12 @@
-const { getUserIdFromToken } = require("../utils/auth");
 const QuizResult = require("../models/quizResult");
 const { getWeekRange } = require("../utils/week");
 
 exports.getQuizResultByWeek = async (req, res) => {
-  const studentId = Number(getUserIdFromToken(req, "student")) || 1;
+  const studentId = req.params.studentId;
   const weekQuery = req.query.week;
 
   try {
-    const result = await QuizResult.findOne({ studentId });
+    const result = await QuizResult.findOne({ studentId: studentId });
     if (!result)
       return res.status(404).json({ message: "해당 학생의 퀴즈 성적 데이터가 없습니다." });
 
