@@ -19,18 +19,10 @@ exports.assignWordToStudent = async (req, res) => {
     const studentInfo = await Student.findById(studentId).select("-password");
     if (!studentInfo) return res.status(404).json({ message: "학생 정보가 없습니다." });
 
-    // 회원의 level 값 (없으면 1로 기본 세팅)
+    // 오늘 날짜 + 해당 레벨 단어 가져오기 (date 필드 기준)
     const level = getLevelLabel(studentInfo.level);
-    const today = new Date();
-    const start = new Date(today.setHours(0, 0, 0, 0));
-    const end = new Date(today.setHours(23, 59, 59, 999));
-
-    // 오늘 날짜 + 해당 레벨 단어 가져오기
-    const docs = await DailyWord.find({
-      level,
-      inputAt: { $gte: start, $lte: end },
-    }).lean();
-
+    const today = formatDate(new Date());
+    const docs = await DailyWord.find({ level, date: today }).lean();
     if (!docs.length) {
       return res.status(404).json({ message: `${today}의 ${level} 레벨의 단어가 없습니다.` });
     }

@@ -10,37 +10,6 @@ const { formatDate } = require("../utils/date");
 const { getWeekRange } = require("../utils/week");
 const { getLevelLabel } = require("../utils/level");
 const { Weakness } = require("../models/weakness");
-const { format } = require("../config/mySql");
-
-// mon_quiz_id로 category 가져오기
-const getCategoryByQuiz = async (mq_id) => {
-  const result = await StudentQuiz.aggregate([
-    { $match: { mq_id } }, // mon_quiz에서 mq_id
-    {
-      $lookup: {
-        from: "mon_news", // mon_news
-        localField: "mn_id",
-        foreignField: "mn_id",
-        as: "news",
-      },
-    },
-    { $unwind: "$news" },
-    {
-      $lookup: {
-        from: "org_article_tb", // org_article_tb
-        localField: "news.oa_id",
-        foreignField: "oa_id",
-        as: "article",
-      },
-    },
-    { $unwind: "$article" },
-    { $project: { category: "$article.category", _id: 0 } },
-  ]);
-
-  if (!result.length) throw new Error("Category not found");
-
-  return result[0].category;
-};
 
 // [POST] 학생에게 오늘 퀴즈 배정 (level)
 exports.assignMonQuizToStudent = async (req, res) => {
@@ -54,55 +23,61 @@ exports.assignMonQuizToStudent = async (req, res) => {
     const level = getLevelLabel(studentInfo.level);
     const today = formatDate(new Date());
 
-    // 오늘 날짜 + 레벨에 맞는 DailyQuiz 가져오기
     const quizzes = await DailyQuiz.find({ date: today, level }).lean();
     if (!quizzes.length) return res.status(404).json({ message: "오늘 배정할 퀴즈가 없습니다." });
 
-    // 학생 퀴즈 DB 확인
     let studentQuiz = await StudentQuiz.findOne({ studentId });
     if (!studentQuiz) {
-      const quizList = quizzes.map((q) => ({
-        quizId: q.quizId,
-        type: q.type,
-        category: q.category,
-        question: q.question,
-        choices: q.choices,
-        answer: q.answer,
-        selectedAnswer: null,
-        inCorrect: false,
-        marking: q.marking,
-        assignedAt: new Date(),
-        completed: false,
-        submit: false,
-        submitDate: null,
-      }));
+      const quizList = quizzes.flatMap((dq) =>
+        (dq.quizList || []).map((q) => ({
+          quizId: q.mqiId,
+          type: q.source,
+          category: q.category,
+          question: q.question,
+          choices: q.choices,
+          answer: q.answer,
+          selectedAnswer: null,
+          isCorrect: false,
+          marking: q.marking,
+          assignedAt: new Date(),
+          submit: false,
+          submitDate: null,
+        }))
+      );
 
-      studentQuiz = await StudentQuiz.create({ studentId, quizList });
+      studentQuiz = await StudentQuiz.create({
+        studentId,
+        category: null,
+        score: 0,
+        quizList,
+      });
+
       return res.json({
         message: "오늘 MON 퀴즈가 배정되었습니다.",
         count: quizList.length,
       });
     }
 
-    // 이미 저장된 퀴즈와 중복 제거
+    // 중복 제거
     const existIds = new Set(studentQuiz.quizList.map((q) => q.quizId));
-    const newItems = quizzes
-      .filter((q) => !existIds.has(q.quizId))
-      .map((q) => ({
-        quizId: q.quizId,
-        type: q.type,
-        category: q.category,
-        question: q.question,
-        choices: q.choices,
-        answer: q.answer,
-        selectedAnswer: null,
-        inCorrect: false,
-        marking: q.marking,
-        assignedAt: new Date(),
-        completed: false,
-        submit: false,
-        submitDate: null,
-      }));
+    const newItems = quizzes.flatMap((dq) =>
+      (dq.quizList || [])
+        .filter((q) => !existIds.has(q.mqiId))
+        .map((q) => ({
+          quizId: q.mqiId,
+          type: q.source,
+          category: q.category,
+          question: q.question,
+          choices: q.choices,
+          answer: q.answer,
+          selectedAnswer: null,
+          isCorrect: false,
+          marking: q.marking,
+          assignedAt: new Date(),
+          submit: false,
+          submitDate: null,
+        }))
+    );
 
     if (newItems.length) {
       studentQuiz.quizList.push(...newItems);
@@ -150,6 +125,8 @@ exports.getTodayMonQuiz = async (req, res) => {
 exports.postMonQuizSubmit = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student");
+    if (!studentId) return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+
     const { selectedChoices } = req.body;
     const today = formatDate(new Date());
 
@@ -157,22 +134,29 @@ exports.postMonQuizSubmit = async (req, res) => {
       return res.status(400).json({ message: "선택한 답이 없습니다." });
 
     const studentQuiz = await StudentQuiz.findOne({ studentId });
-    if (!studentQuiz) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
+    if (!studentQuiz) return res.status(404).json({ message: "Mon퀴즈가 없습니다." });
 
     const todayQuiz = studentQuiz.quizList.filter((q) => formatDate(q.assignedAt) === today);
+
     if (!todayQuiz.length) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
 
-    // 선택 답 적용
-    todayQuiz.forEach((quiz) => {
-      const selected = selectedChoices[quiz.quizId];
+    // 답 적용
+    todayQuiz.forEach((q) => {
+      const selected = selectedChoices[q.quizId];
       if (selected) {
-        quiz.selectedAnswer = selected;
-        quiz.isCorrect = quiz.answer === selected;
-        quiz.submit = true;
-        quiz.submitDate = new Date();
+        q.selectedAnswer = selected;
+        q.isCorrect = q.answer === selected;
+        q.submit = true;
+        q.submitDate = new Date();
       }
     });
 
+    // score 계산
+    const total = todayQuiz.length;
+    const correct = todayQuiz.filter((q) => q.isCorrect).length;
+    const percentage = Math.round((correct / total) * 100);
+
+    studentQuiz.score = percentage;
     await studentQuiz.save();
 
     // 틀린 퀴즈 id 추출
@@ -191,11 +175,6 @@ exports.postMonQuizSubmit = async (req, res) => {
     // } catch (err) {
     //   console.error("틀린 퀴즈 전송 실패:", err.message);
     // }
-
-    // score 계산
-    const total = todayQuiz.length;
-    const correct = todayQuiz.filter((q) => q.isCorrect).length;
-    const percentage = Math.round((correct / total) * 100);
 
     // quizResult 컬렉션에 저장
     await QuizResult.updateOne(
@@ -217,34 +196,36 @@ exports.postMonQuizSubmit = async (req, res) => {
     const nextDay = new Date(weekEnd);
     nextDay.setDate(nextDay.getDate() + 1);
 
-    const category = await getCategoryByQuiz(quizId);
+    const category = todayQuiz[0]?.category || null;
 
-    await Weakness.updateOne(
-      { studentId },
-      {
-        $push: {
-          weakWord: {
-            date: nextDay,
-            categories: {
-              category,
-              total: total,
-              correct: correct,
+    if (category) {
+      await Weakness.updateOne(
+        { studentId },
+        {
+          $push: {
+            weakWord: {
+              date: nextDay,
+              categories: {
+                category,
+                total: total,
+                correct: correct,
+              },
+              summary: null,
             },
-            summary: null,
-          },
-          weakNews: {
-            date: nextDay,
-            categories: {
-              category,
-              total: total,
-              correct: correct,
+            weakNews: {
+              date: nextDay,
+              categories: {
+                category,
+                total: total,
+                correct: correct,
+              },
+              summary: null,
             },
-            summary: null,
           },
         },
-      },
-      { upsert: true }
-    );
+        { upsert: true }
+      );
+    }
 
     // progress에 오늘 퀴즈 완료 반영
     let progress = await Progress.findOne({ studentId });
@@ -257,7 +238,7 @@ exports.postMonQuizSubmit = async (req, res) => {
     } else {
       // 오늘 날짜 데이터 확인
       let todayData = progress.days.find((d) => formatDate(d.day) === today);
-      if (!todayQuiz) {
+      if (!todayData) {
         todayData = { day: today, tasks: { quiz: "done" } };
         progress.days.push(todayData);
       } else {
@@ -271,8 +252,8 @@ exports.postMonQuizSubmit = async (req, res) => {
 
     res.json({
       message: "오늘 Mon 퀴즈 제출 완료!",
-      result: todayQuiz.map(({ dqId, isCorrect, selectedAnswer, marking, answer }) => ({
-        id: dqId,
+      result: todayQuiz.map(({ quizId, isCorrect, selectedAnswer, marking, answer }) => ({
+        id: quizId,
         answer,
         isCorrect,
         selectedAnswer,
@@ -298,69 +279,75 @@ exports.getTodayMonQuizMark = async (req, res) => {
       (q) => formatDate(q.assignedAt) === today && q.submit
     );
 
-    if (!todayQuiz) return res.status(404).json({ message: "퀴즈를 제출하지 않았습니다." });
+    if (!todayQuiz.length) return res.status(404).json({ message: "퀴즈를 제출하지 않았습니다." });
 
     // quizzes 배열에서 필요한 필드만 뽑아서 response
-    const responseQuizMarks = todayQuiz.map(
-      ({ quizId, type, question, choices, answer, selectedAnswer, marking, isCorrect }) => ({
-        id: quizId,
-        type,
-        question,
-        choices,
-        answer,
-        selectedAnswer,
-        isCorrect,
-        marking,
-      })
-    );
-
-    res.json({ result: responseQuizMarks });
+    res.json({
+      result: todayQuiz.map(
+        ({ quizId, type, question, choices, answer, selectedAnswer, marking, isCorrect }) => ({
+          id: quizId,
+          type,
+          question,
+          choices,
+          answer,
+          selectedAnswer,
+          isCorrect,
+          marking,
+        })
+      ),
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json("오늘 Mon퀴즈 채점 조회 실패");
+    res.status(500).json({ message: "오늘 Mon퀴즈 채점 조회 실패" });
   }
 };
 
-// [post] 오늘의 monQuiz 채점 학습/확인 완료
-exports.postTodayMonQuizMarkDone = async (req, res) => {
-  try {
-    const studentId = getUserIdFromToken(req, "student");
-    const today = formatDate(new Date());
+// // [post] 오늘의 monQuiz 채점 학습/확인 완료
+// // 위에서 제출할 때 처리하므로 따로 하지 X
+// exports.postTodayMonQuizMarkDone = async (req, res) => {
+//   try {
+//     const studentId = getUserIdFromToken(req, "student");
+//     const today = formatDate(new Date());
 
-    const studentQuiz = await StudentQuiz.findOne({ studentId });
-    if (!studentQuiz) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
+//     const studentQuiz = await StudentQuiz.findOne({ studentId });
+//     if (!studentQuiz)
+//       return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
 
-    const todayQuiz = studentQuiz.quizList.filter(
-      (q) => formatDate(q.assignedAt) === today && q.submit
-    );
+//     const todayQuiz = studentQuiz.quizList.filter(
+//       (q) => formatDate(q.assignedAt) === today && q.submit
+//     );
 
-    if (!todayQuiz) return res.status(404).json({ message: "퀴즈를 제출하지 않았습니다." });
+//     if (!todayQuiz)
+//       return res.status(404).json({ message: "퀴즈를 제출하지 않았습니다." });
 
-    // 학습 완료 처리
-    todayQuiz.forEach((q) => (q.completed = true));
-    await studentQuiz.save();
+//     // 학습 완료 처리
+//     todayQuiz.forEach((q) => (q.completed = true));
+//     await studentQuiz.save();
 
-    res.json({ message: "오늘 Mon 퀴즈 학습 완료!" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "퀴즈 학습 완료 처리 실패" });
-  }
-};
+//     res.json({ message: "오늘 Mon 퀴즈 학습 완료!" });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: "퀴즈 학습 완료 처리 실패" });
+//   }
+// };
 
 // [get] 학생이 제출했는지 여부
 exports.getStudentSubmit = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student");
+    if (!studentId) return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+
     const today = formatDate(new Date());
 
     const studentQuiz = await StudentQuiz.findOne({ studentId }).lean();
     if (!studentQuiz) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
 
+    // 오늘 퀴즈 필터링
     const todayQuiz = studentQuiz.quizList.filter((q) => formatDate(q.assignedAt) === today);
 
-    if (!todayQuiz) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
+    if (!todayQuiz.length) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
 
-    const isSubmitted = todayQuiz.some((q) => q.submit);
+    const isSubmitted = todayQuiz.some((q) => q.submit === true);
 
     res.json({
       submit: isSubmitted,
@@ -384,14 +371,17 @@ exports.getMonQuizActive = async (req, res) => {
     const studentNews = await StudentNews.findOne({ studentId }).lean();
     const todayNews =
       studentNews?.newsList?.filter((item) => formatDate(item.assignedAt) === today) || [];
-    console.log(todayNews);
-    const newsCompleted = todayNews.completed;
+
+    // 오늘 배정된 뉴스가 하나 이상이면 모두 완료여부 확인
+    const newsCompleted = todayNews.length ? todayNews.every((n) => n.completed) : false;
 
     // 오늘 할당된 단어 조회
     const studentWord = await StudentWord.findOne({ studentId }).lean();
     const todayWords =
       studentWord?.wordList?.filter((item) => formatDate(item.assignedAt) === today) || [];
-    const allWordsCompleted = todayWords.every((word) => word.completed);
+    const allWordsCompleted = todayWords.length
+      ? todayWords.every((word) => word.completed)
+      : false;
 
     // monQuiz 활성화 조건: 오늘 뉴스 + 단어 모두 완료
     const isMonQuizActive = newsCompleted && allWordsCompleted;
