@@ -32,7 +32,7 @@ exports.assignWordToStudent = async (req, res) => {
       const wordList = docs.flatMap((d) =>
         d.words.map((w) => ({
           mwiId: w.mwiId,
-          category: w.category,
+          category: w.category || d.category, // ← word에 없으면 DailyWord의 category 사용
           word: w.word,
           meaning: w.meaning,
           practice: w.practice,
@@ -56,7 +56,7 @@ exports.assignWordToStudent = async (req, res) => {
         .filter((w) => !existIds.has(w.mwiId)) // 중복 제거
         .map((w) => ({
           mwiId: w.mwiId,
-          category: w.category,
+          category: w.category || d.category, // ← word에 없으면 DailyWord의 category 사용
           word: w.word,
           meaning: w.meaning,
           practice: w.practice || "",
