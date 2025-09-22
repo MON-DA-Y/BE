@@ -12,6 +12,7 @@ const studentQuizSchema = new mongoose.Schema({
     default: () => new Date().setHours(0, 0, 0, 0), // 하루 단위로 관리
     index: true,
   },
+  category: { type: String },
   submit: { type: Boolean, default: false },
   submitDate: { type: Date, default: null },
   score: { type: Number, default: 0 }, // 퍼센트 점수
