@@ -1,5 +1,5 @@
 const { getUserIdFromToken } = require("../utils/auth");
-const WordHistory = require("../models/wordHistory");
+const StudentWord = require("../models/studentWord");
 const { getWeekRange } = require("../utils/week");
 
 exports.getWordHistory = async (req, res) => {
@@ -7,7 +7,7 @@ exports.getWordHistory = async (req, res) => {
   const weekQuery = req.query.week;
 
   try {
-    const wordData = await WordHistory.findOne({ studentId });
+    const wordData = await StudentWord.findOne({ studentId });
     if (!wordData) return res.status(404).json({ message: "해당 학생의 단어 데이터가 없습니다." });
 
     const { weekStart, weekEnd } = getWeekRange(weekQuery);
