@@ -13,22 +13,18 @@ exports.assignWordToStudent = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student");
 
-    if (!studentId)
-      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+    if (!studentId) return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     // studentId로 DB에서 회원 조회 (비밀번호 제외)
     const studentInfo = await Student.findById(studentId).select("-password");
-    if (!studentInfo)
-      return res.status(404).json({ message: "학생 정보가 없습니다." });
+    if (!studentInfo) return res.status(404).json({ message: "학생 정보가 없습니다." });
 
     // 오늘 날짜 + 해당 레벨 단어 가져오기 (date 필드 기준)
     const level = getLevelLabel(studentInfo.level);
     const today = formatDate(new Date());
     const docs = await DailyWord.find({ level, date: today }).lean();
     if (!docs.length) {
-      return res
-        .status(404)
-        .json({ message: `${today}의 ${level} 레벨의 단어가 없습니다.` });
+      return res.status(404).json({ message: `${today}의 ${level} 레벨의 단어가 없습니다.` });
     }
 
     let student = await StudentWord.findOne({ studentId });
@@ -90,8 +86,7 @@ exports.assignWordToStudent = async (req, res) => {
 exports.getTodayMonWord = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student");
-    if (!studentId)
-      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+    if (!studentId) return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     const today = formatDate(new Date());
 
@@ -100,8 +95,7 @@ exports.getTodayMonWord = async (req, res) => {
 
     if (!studentWords) {
       const dailyWords = await DailyWord.find({ date: today }).lean();
-      if (!dailyWords.length)
-        return res.status(404).json({ message: "오늘 단어가 없습니다." });
+      if (!dailyWords.length) return res.status(404).json({ message: "오늘 단어가 없습니다." });
 
       // 3) 학생Word 생성
       const wordList = dailyWords.flatMap((dw) =>
@@ -140,8 +134,7 @@ exports.postWordItemUnderstand = async (req, res) => {
   try {
     const studentId = new Types.ObjectId(getUserIdFromToken(req, "student"));
 
-    if (!studentId)
-      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+    if (!studentId) return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     const { id } = req.body;
     if (!id) return res.status(400).json({ message: "단어 ID 필요" });
@@ -170,16 +163,13 @@ exports.postTodayMonWordDone = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student");
 
-    if (!studentId)
-      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+    if (!studentId) return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     const studentWords = await StudentWord.findOne({ studentId });
-    if (!studentWords)
-      return res.status(404).json({ message: "오늘 단어가 없습니다." });
+    if (!studentWords) return res.status(404).json({ message: "오늘 단어가 없습니다." });
 
     const allUnderstood = studentWords.wordList.every((w) => w.understand);
-    if (!allUnderstood)
-      return res.status(400).json({ message: "모든 단어를 학습해주세요." });
+    if (!allUnderstood) return res.status(400).json({ message: "모든 단어를 학습해주세요." });
 
     const today = formatDate(new Date());
 
@@ -204,9 +194,7 @@ exports.postTodayMonWordDone = async (req, res) => {
       });
     } else {
       // 오늘 날짜 데이터 확인
-      let todayData = progress.days.find(
-        (d) => d.day.toISOString().split("T")[0] === today
-      );
+      let todayData = progress.days.find((d) => d.day.toISOString().split("T")[0] === today);
       if (!todayData) {
         todayData = { day: today, tasks: { word: "done" } };
         progress.days.push(todayData);
