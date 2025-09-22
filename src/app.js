@@ -20,6 +20,7 @@ const logInRouter = require("./routes/logInRouter");
 const parentInfoRouter = require("./routes/parentInfoRouter");
 const studentMainRouter = require("./routes/studentMainRouter");
 const syncRouter = require("./routes/syncRouter");
+const monSeriesRouter = require("./routes/monSeriesRouter");
 
 const app = express();
 
@@ -53,5 +54,6 @@ app.use("/api", parentInfoRouter);
 app.use("/api", signUpRouter);
 app.use("/api", logInRouter);
 app.use("/api", studentMainRouter);
+app.use("/api/monSeries", monSeriesRouter);
 
 module.exports = app;
