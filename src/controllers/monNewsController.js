@@ -61,7 +61,11 @@ exports.assignNewsToStudent = async (req, res) => {
     }
 
     // 이미 저장된 뉴스와 비교 → 중복 제거
-    const existIds = new Set(student.newsList.map((n) => n.mnId));
+    const existIds = new Set(
+      student.newsList
+        .filter((n) => formatDate(n.assignedAt) === today)
+        .map((n) => n.mnId)
+    );
     const newItems = docs
       .filter((d) => !existIds.has(d.mnId))
       .map((d) => ({
