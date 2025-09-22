@@ -16,7 +16,7 @@ const studentQuizSchema = new mongoose.Schema({
   submit: { type: Boolean, default: false },
   submitDate: { type: Date, default: null },
   score: { type: Number, default: 0 }, // 퍼센트 점수
-  quizzes: [
+  quizList: [
     {
       quizId: { type: Number, required: true },
       type: { type: String, enum: ["word", "news"], required: true },
