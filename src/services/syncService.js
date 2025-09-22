@@ -11,7 +11,7 @@ async function syncDailyNewsForDate(dateStr) {
     const [rows] = await conn.execute(
       `
         SELECT m.mn_id AS mnId, m.oa_id AS oaId, m.level, m.title, m.main AS body,
-            m.summary, m.input_at, o.img_url AS imgUrl
+            m.summary, m.input_at, o.img_url AS imgUrl, m.category
         FROM mon_news m
         LEFT JOIN org_article_tb o ON m.oa_id = o.oa_id
         WHERE DATE(m.input_at) = ?
@@ -35,6 +35,7 @@ async function syncDailyNewsForDate(dateStr) {
             summary: row.summary,
             imgUrl: row.imgUrl,
             inputAt: row.input_at,
+            category: row.category,
             date: dateStr,
           },
         },
@@ -64,7 +65,8 @@ async function syncDailyWordsForDate(dateStr) {
         mwi.practice,
         mwi.position,
         mn.oa_id AS oaId,
-        mn.level AS level
+        mn.level AS level,
+        mn.category AS category
       FROM mon_words mw
       JOIN mon_word_items mwi ON mw.mw_id = mwi.mw_id
       JOIN mon_news mn ON mw.mn_id = mn.mn_id
@@ -76,12 +78,13 @@ async function syncDailyWordsForDate(dateStr) {
 
     if (!rows.length) return { inserted: 0 };
 
-    // mnId별로 단어를 그룹화
+    // mnId별 그룹화
     const groupedWords = rows.reduce((acc, row) => {
       const {
         mnId,
         oaId,
         level,
+        category,
         inputAt,
         mwiId,
         word,
@@ -89,35 +92,32 @@ async function syncDailyWordsForDate(dateStr) {
         practice,
         position,
       } = row;
-      const key = mnId;
+      const key = `${mnId}_${dateStr}`;
 
       if (!acc[key]) {
         acc[key] = {
           mnId,
           oaId,
           level,
+          category,
           inputAt,
           words: [],
         };
       }
-      acc[key].words.push({
-        mwiId,
-        word,
-        meaning,
-        practice,
-        position,
-      });
+
+      acc[key].words.push({ mwiId, word, meaning, practice, position });
       return acc;
     }, {});
 
     const ops = Object.values(groupedWords).map((doc) => ({
       updateOne: {
-        filter: { mnId: doc.mnId },
+        filter: { mnId: doc.mnId, date: dateStr },
         update: {
           $set: {
             mnId: doc.mnId,
             oaId: doc.oaId,
             level: doc.level,
+            category: doc.category,
             inputAt: doc.inputAt,
             words: doc.words,
           },
@@ -126,8 +126,7 @@ async function syncDailyWordsForDate(dateStr) {
       },
     }));
 
-    const res = await DailyWord.bulkWrite(ops);
-    return res;
+    return await DailyWord.bulkWrite(ops);
   } finally {
     conn.release();
   }
@@ -139,7 +138,7 @@ async function syncDailyQuizForDate(dateStr) {
   try {
     const [rows] = await conn.execute(
       `
-      SELECT mq.mq_id AS mqId, mq.mn_id AS mnId, mn.oa_id AS oaId, mn.level, mq.input_at,
+      SELECT mq.mq_id AS mqId, mq.mn_id AS mnId, mn.oa_id AS oaId, mn.level, mn.category, mq.input_at,
              mqi.mqi_id AS mqiId, mqi.question, mqi.choices, mqi.answer, mqi.explanation AS marking,
              mqi.source, mqi.position
       FROM mon_quiz mq
@@ -155,9 +154,9 @@ async function syncDailyQuizForDate(dateStr) {
 
     // mqId별로 그룹화
     const grouped = rows.reduce((acc, row) => {
-      const { mqId, mnId, level, oaId } = row;
-      if (!acc[mqId]) acc[mqId] = { mqId, mnId, level, quizzes: [] };
-      acc[mqId].quizzes.push({
+      const { mqId, mnId, level, category } = row;
+      if (!acc[mqId]) acc[mqId] = { mqId, mnId, level, category, quizList: [] };
+      acc[mqId].quizList.push({
         mqiId: row.mqiId,
         question: row.question,
         choices: JSON.parse(row.choices),
@@ -174,14 +173,13 @@ async function syncDailyQuizForDate(dateStr) {
       updateOne: {
         filter: { date: dateStr, mqId: doc.mqId },
         update: {
-          $set: {
-            date: dateStr,
-            mqId: doc.mqId,
-            mnId: doc.mnId,
-            level: doc.level,
-            quizzes: doc.quizzes,
-            updatedAt: new Date(),
-          },
+          date: dateStr,
+          mqId: doc.mqId,
+          mnId: doc.mnId,
+          level: doc.level,
+          category: doc.category,
+          quizList: doc.quizList,
+          updatedAt: new Date(),
         },
         upsert: true,
       },
