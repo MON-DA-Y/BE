@@ -10,6 +10,7 @@ const studentWordSchema = new mongoose.Schema({
   wordList: [
     {
       mwiId: { type: Number, required: true }, // DailyWord.words.mwiId
+      category: { type: String },
       word: { type: String, required: true },
       meaning: { type: String, required: true },
       practice: { type: String },

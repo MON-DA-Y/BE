@@ -3,6 +3,7 @@ const StudentNews = require("../models/studentNews");
 const Student = require("../models/student");
 const { formatDate } = require("../utils/date");
 const { getUserIdFromToken } = require("../utils/auth");
+const { getLevelLabel } = require("../utils/level");
 const Progress = require("../models/progress");
 
 // [POST] 학생에게 오늘 뉴스 배정 (level)
@@ -19,14 +20,14 @@ exports.assignNewsToStudent = async (req, res) => {
       return res.status(404).json({ message: "학생 정보가 없습니다." });
 
     // 회원의 level 값 (없으면 1로 기본 세팅)
-    const level = studentInfo.level || "씨앗";
-    const dateStr = formatDate(new Date());
+    const level = getLevelLabel(studentInfo.level);
+    const today = formatDate(new Date());
 
     // ① 오늘 날짜 + 해당 레벨 뉴스 가져오기
-    const docs = await DailyNews.find({ date: dateStr, level }).lean();
+    const docs = await DailyNews.find({ date: today, level }).lean();
 
     // ② 테스트용 - 가장 최신 날짜 / 해당 레벨 1개 가져오기
-    // const docs = await DailyNews.find({ level, date: dateStr })
+    // const docs = await DailyNews.find({ level, date: today })
     //   .sort({
     //     date: -1,
     //   })
@@ -35,13 +36,14 @@ exports.assignNewsToStudent = async (req, res) => {
     if (!docs.length) {
       return res
         .status(404)
-        .json({ message: `${dateStr}의 ${level} 레벨의 뉴스가 없습니다.` });
+        .json({ message: `${today}의 ${level} 레벨의 뉴스가 없습니다.` });
     }
 
     let student = await StudentNews.findOne({ studentId });
     if (!student) {
       const newsList = docs.map((d) => ({
         mnId: d.mnId,
+        category: d.category,
         level: d.level,
         title: d.title,
         body: d.body,
@@ -64,6 +66,7 @@ exports.assignNewsToStudent = async (req, res) => {
       .filter((d) => !existIds.has(d.mnId))
       .map((d) => ({
         mnId: d.mnId,
+        category: d.category,
         level: d.level,
         title: d.title,
         body: d.body,
@@ -157,9 +160,7 @@ exports.postTodayMonNewsDone = async (req, res) => {
       });
     } else {
       // 오늘 날짜 데이터 확인
-      let todayData = progress.days.find(
-        (d) => d.day.toISOString().split("T")[0] === today
-      );
+      let todayData = progress.days.find((d) => formatDate(d.day) === today);
       if (!todayData) {
         todayData = { day: today, tasks: { news: "done" } };
         progress.days.push(todayData);
