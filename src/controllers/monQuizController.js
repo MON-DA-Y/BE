@@ -45,9 +45,11 @@ exports.assignMonQuizToStudent = async (req, res) => {
         }))
       );
 
+      const category = quizList[0]?.category ?? "uncategorized";
+
       studentQuiz = await StudentQuiz.create({
         studentId,
-        category: null,
+        category,
         score: 0,
         quizList,
       });

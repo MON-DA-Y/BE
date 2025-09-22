@@ -21,7 +21,8 @@ exports.getQuizResultByWeek = async (req, res) => {
     const endStr = formatKSTDate(weekEnd);
 
     const resultsInWeek = result.results.filter((r) => {
-      return r.day >= startStr && r.day <= endStr;
+      const dayStr = r.day.toISOString().slice(0, 10); // "YYYY-MM-DD"
+      return dayStr >= startStr && dayStr <= endStr;
     });
 
     res.json({ results: resultsInWeek });

@@ -1,7 +1,6 @@
 const { getUserIdFromToken } = require("../utils/auth");
-//const Weakness = require("../models/weakness");
 const { getWeekRange } = require("../utils/week");
-const { getLatestSummary } = require("../models/weakness");
+const { getLatestSummary, Weakness } = require("../models/weakness");
 
 const DummyWeakness = {
   findOne: async ({ studentId }) => {
@@ -44,7 +43,7 @@ exports.getWeaknessByWeek = async (req, res) => {
   const weekQuery = req.query.week;
 
   try {
-    const weakness = await DummyWeakness.findOne({ studentId });
+    const weakness = await Weakness.findOne({ studentId });
     if (!weakness) return res.json({ weakWord: null, weakNews: null });
 
     function formatKSTDate(date) {
@@ -97,7 +96,7 @@ exports.getStudentWeakness = async (req, res) => {
   const weekQuery = req.query.week;
 
   try {
-    const weakness = await DummyWeakness.findOne({ studentId: studentId });
+    const weakness = await Weakness.findOne({ studentId: studentId });
     if (!weakness) return res.json({ weakWord: null, weakNews: null });
 
     function formatKSTDate(date) {

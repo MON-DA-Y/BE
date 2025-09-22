@@ -22,7 +22,6 @@ const progressSchema = new mongoose.Schema({
       tasks: {
         word: { type: String, enum: ["done", "pending"], default: "pending" },
         news: { type: String, enum: ["done", "pending"], default: "pending" },
-        series: { type: String, enum: ["done", "ongoing", "pending"], default: "pending" },
         quiz: { type: String, enum: ["done", "pending"], default: "pending" },
       },
     },
@@ -38,8 +37,8 @@ progressSchema.statics.updateStrikeDay = async function (studentId, today) {
   const todayData = progress.days.find((d) => d.day.toISOString().split("T")[0] === today);
   if (!todayData) return;
 
-  const { word, news, series, quiz } = todayData.tasks;
-  if (word === "done" && news === "done" && series === "done" && quiz === "done") {
+  const { word, news, quiz } = todayData.tasks;
+  if (word === "done" && news === "done" && quiz === "done") {
     // strikeDay 증가
     progress.strikeDay += 1;
     await progress.save(); // 저장

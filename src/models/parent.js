@@ -6,6 +6,7 @@ const parentSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   phone: { type: String, required: true },
   password: { type: String, required: true },
+  studentIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }], // studentId 배열
 });
 
 // 비밀번호 해시
