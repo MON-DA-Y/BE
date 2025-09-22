@@ -1,5 +1,5 @@
 const { getUserIdFromToken } = require("../utils/auth");
-const SeriesHistory = require("../models/seriesHistory");
+const StudentSeries = require("../models/studentSeries");
 const { getWeekRange } = require("../utils/week");
 
 exports.getSeriesHistory = async (req, res) => {
@@ -7,7 +7,7 @@ exports.getSeriesHistory = async (req, res) => {
   const weekQuery = req.query.week;
 
   try {
-    const seriesData = await SeriesHistory.findOne({ studentId });
+    const seriesData = await StudentSeries.findOne({ studentId });
     if (!seriesData)
       return res.status(404).json({ message: "해당 학생의 시리즈 데이터가 없습니다." });
 
