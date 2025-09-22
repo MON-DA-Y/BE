@@ -1,4 +1,16 @@
 const mongoose = require("mongoose");
+const Student = require("../models/student");
+
+// strikeDay에 따른 Level
+const getLevelByStrike = (strikeDay) => {
+  if (strikeDay >= 700) return 7;
+  if (strikeDay >= 365) return 6;
+  if (strikeDay >= 200) return 5;
+  if (strikeDay >= 100) return 4;
+  if (strikeDay >= 66) return 3;
+  if (strikeDay >= 21) return 2;
+  return 1;
+};
 
 const progressSchema = new mongoose.Schema({
   studentId: { type: String, required: true },
@@ -28,7 +40,15 @@ progressSchema.statics.updateStrikeDay = async function (studentId, today) {
 
   const { word, news, series, quiz } = todayData.tasks;
   if (word === "done" && news === "done" && series === "done" && quiz === "done") {
-    await this.updateOne({ studentId }, { $inc: { strikeDay: 1 } });
+    await this.updateOne({ studentId }, { $inc: { strikeDay: 1 } }, { new: true });
+  }
+
+  // Student DB Level 업데이트
+  const newLevel = getLevelByStrike(updated.strikeDay);
+  const student = await Student.findById(studentId);
+  if (student.level !== newLevel) {
+    student.level = newLevel;
+    await student.save();
   }
 };
 
