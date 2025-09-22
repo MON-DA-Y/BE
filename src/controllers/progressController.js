@@ -3,36 +3,6 @@ const Progress = require("../models/progress");
 const { getWeekRange } = require("../utils/week");
 const Parent = require("../models/parent");
 
-const DummyProgress = {
-  findOne: async ({ studentId }) => {
-    return {
-      studentId,
-      weekCompletionRate: 50,
-      strikeDay: 2,
-      days: [
-        {
-          day: "2025-09-16",
-          tasks: {
-            word: "done",
-            news: "done",
-            series: "ongoing",
-            quiz: "done",
-          },
-        },
-        {
-          day: "2025-09-17",
-          tasks: {
-            word: "done",
-            news: "pending",
-            series: "pending",
-            quiz: "done",
-          },
-        },
-      ],
-    };
-  },
-};
-
 exports.getProgressByWeek = async (req, res) => {
   const studentId = getUserIdFromToken(req, "student");
   const weekQuery = req.query.week;
@@ -80,10 +50,6 @@ exports.getParentProgress = async (req, res) => {
 
     const studentId = parent.studentIds[0]; // 학생 한 명만 있다고 가정
     const { weekStart, weekEnd } = getWeekRange(weekQuery);
-
-    // 기본값
-    let weekCompletionRate = 0;
-    let strikeDay = 0;
 
     const progress = await Progress.findOne({ studentId });
     if (!progress) {
