@@ -1,5 +1,6 @@
 const StudentWord = require("../models/studentWord");
 const StudentNews = require("../models/studentNews");
+const { Series, SeriesKeyword } = require("../models/syncSeries");
 const { formatDate } = require("../utils/date");
 const { getUserIdFromToken } = require("../utils/auth");
 
@@ -121,5 +122,34 @@ exports.getStdMonNews = async (req, res) => {
   } catch (err) {
     console.error("getStdMonNews 에러:", err);
     res.status(500).json({ message: "오늘 뉴스 조회 실패" });
+  }
+};
+
+// [GET] 학생 메인 monSeries 조회 (동기화된 전체에서 2개 랜덤/순서)
+exports.getStdMonSeries = async (req, res) => {
+  try {
+    // 동기화된 전체 시리즈 및 키워드 조회
+    const seriesList = await Series.find().lean();
+    const keywords = await SeriesKeyword.find().lean();
+
+    // 랜덤으로 섞기
+    const shuffled = seriesList.sort(() => 0.5 - Math.random());
+
+    // 시리즈에서 키워드(mainKeyword) 매칭
+    const result = shuffled.map((s) => {
+      const keywordObj = keywords.find((kw) => kw.kwId === s.kwId);
+      return {
+        id: s.msId,
+        keyword: keywordObj ? keywordObj.mainKeyword : "",
+        title: s.title,
+        sub_title: s.subtitle || "",
+        parts: [],
+      };
+    });
+
+    res.json({ result: result });
+  } catch (err) {
+    console.error("getStdMonSeries 에러:", err);
+    res.status(500).json({ message: "오늘 시리즈 조회 실패" });
   }
 };
