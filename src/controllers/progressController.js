@@ -1,6 +1,7 @@
 const { getUserIdFromToken } = require("../utils/auth");
 const Progress = require("../models/progress");
 const { getWeekRange } = require("../utils/week");
+const Parent = require("../models/parent");
 
 const DummyProgress = {
   findOne: async ({ studentId }) => {
@@ -67,38 +68,40 @@ exports.getProgressByWeek = async (req, res) => {
 };
 
 // 부모가 학생 진도 상황 조회
-exports.getStudentProgress = async (req, res) => {
-  const studentId = req.params.studentId;
+exports.getParentProgress = async (req, res) => {
+  const parentId = getUserIdFromToken(req, "parent");
   const weekQuery = req.query.week;
 
   try {
-    const progress = await Progress.findOne({ studentId: studentId });
+    const parent = await Parent.findById(parentId);
+    if (!parent || !parent.studentIds || parent.studentIds.length === 0) {
+      return res.status(404).json({ message: "자녀 정보가 없습니다." });
+    }
 
+    const studentId = parent.studentIds[0]; // 학생 한 명만 있다고 가정
     const { weekStart, weekEnd } = getWeekRange(weekQuery);
 
     // 기본값
-    let progressInWeek = [];
     let weekCompletionRate = 0;
     let strikeDay = 0;
 
-    // 나중에 날짜 오류 나면 format 함수 넣기
-    if (progress) {
-      progressInWeek = progress.days.filter((n) => {
-        const progressDayStr = new Date(n.day).toISOString().split("T")[0];
-        const weekStartStr = weekStart.toISOString().split("T")[0];
-        const weekEndStr = weekEnd.toISOString().split("T")[0];
-
-        return progressDayStr >= weekStartStr && progressDayStr <= weekEndStr;
-      });
-      weekCompletionRate = progress.weekCompletionRate;
-      strikeDay = progress.strikeDay;
+    const progress = await Progress.findOne({ studentId });
+    if (!progress) {
+      return res.status(404).json({ message: "학생 progress 데이터가 없습니다." });
     }
+
+    const progressInWeek = progress.days.filter((n) => {
+      const progressDayStr = new Date(n.day).toISOString().split("T")[0];
+      const weekStartStr = weekStart.toISOString().split("T")[0];
+      const weekEndStr = weekEnd.toISOString().split("T")[0];
+      return progressDayStr >= weekStartStr && progressDayStr <= weekEndStr;
+    });
 
     progressInWeek.sort((a, b) => new Date(a.day) - new Date(b.day));
 
     res.json({
-      weekCompletionRate,
-      strikeDay,
+      weekCompletionRate: progress.weekCompletionRate,
+      strikeDay: progress.strikeDay,
       days: progressInWeek,
     });
   } catch (err) {
