@@ -17,6 +17,7 @@ const dailyWordSchema = new mongoose.Schema({
   oaId: { type: String }, // 원문 기사 id
   level: { type: String },
   inputAt: { type: Date, required: true },
+  category: { type: String },
   words: [wordItemSchema], // monWord item 리스트
 });
 
