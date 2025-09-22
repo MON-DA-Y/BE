@@ -4,6 +4,7 @@ const {
   getStdMonWord,
   getStdMonNews,
   getTodayLearningRate,
+  getStdMonSeries,
 } = require("../controllers/studentMainController");
 
 // monWord 조회
@@ -13,15 +14,12 @@ router.get("/std/monWord", getStdMonWord);
 router.get("/std/monNews", getStdMonNews);
 
 // monSeries 조회
-router.get("/std/monSeries");
+router.get("/std/monSeries", getStdMonSeries);
 
 // monSeries 카테고리 순위
 router.get("/std/monSeries/category");
 
 // TodayLearningRate 오늘의 학습률
 router.get("/std/todayLearningRate", getTodayLearningRate);
-
-// monQuiz 유무
-router.get("/std/monQuiz/status");
 
 module.exports = router;
