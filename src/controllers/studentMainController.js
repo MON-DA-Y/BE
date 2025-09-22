@@ -1,5 +1,6 @@
 const StudentWord = require("../models/studentWord");
 const StudentNews = require("../models/studentNews");
+const StudentSeries = require("../models/studentSeries");
 const { Series, SeriesKeyword } = require("../models/syncSeries");
 const { formatDate } = require("../utils/date");
 const { getUserIdFromToken } = require("../utils/auth");
@@ -31,9 +32,16 @@ exports.getTodayLearningRate = async (req, res) => {
     const learn_news = todayNews.filter((n) => n.completed).length;
     const today_news = todayNews.length;
 
-    // [ 시리즈 ] 💥 시리즈 구현 후 수정
-    const learn_series = 0; // 시리즈 구현 전 기본 0
-    const today_series = 2; // 기본 2
+    // [ 시리즈 ]
+    const studentSeriesList =
+      (await StudentSeries.find({ studentId }).lean()) || [];
+    // 오늘 배정된 시리즈만 필터링
+    const todaySeriesList = studentSeriesList.filter(
+      (s) => s.assignedAt && formatDate(s.assignedAt) === today
+    );
+    // completed 필드가 없으니 "오늘 배정된 건 다 학습 완료"라고 가정
+    const learn_series = todaySeriesList.length;
+    const today_series = 2; // 항상 2개 고정
 
     res.json({
       result: {
