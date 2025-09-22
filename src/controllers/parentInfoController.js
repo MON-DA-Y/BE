@@ -15,6 +15,7 @@ exports.getParentInfo = async (req, res) => {
       prt_name: parent.name,
       prt_email: parent.email,
       prt_phone: parent.phone,
+      studentIds: parent.studentIds || [],
     };
 
     res.json({ result: responsePrtInfo });
