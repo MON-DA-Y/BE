@@ -103,7 +103,7 @@ exports.getTodayMonQuiz = async (req, res) => {
 
     if (!studentQuiz) return res.status(404).json({ message: "오늘 Mon 퀴즈가 없습니다." });
 
-    const todayQuiz = studentQuiz.quizList.filter((q) => formateDate(q.assignedAt) === today);
+    const todayQuiz = studentQuiz.quizList.filter((q) => formatDate(q.assignedAt) === today);
 
     if (!todayQuiz.length) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
 

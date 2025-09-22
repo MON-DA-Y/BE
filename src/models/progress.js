@@ -40,11 +40,13 @@ progressSchema.statics.updateStrikeDay = async function (studentId, today) {
 
   const { word, news, series, quiz } = todayData.tasks;
   if (word === "done" && news === "done" && series === "done" && quiz === "done") {
-    await this.updateOne({ studentId }, { $inc: { strikeDay: 1 } }, { new: true });
+    // strikeDay 증가
+    progress.strikeDay += 1;
+    await progress.save(); // 저장
   }
 
   // Student DB Level 업데이트
-  const newLevel = getLevelByStrike(updated.strikeDay);
+  const newLevel = getLevelByStrike(progress.strikeDay);
   const student = await Student.findById(studentId);
   if (student.level !== newLevel) {
     student.level = newLevel;
