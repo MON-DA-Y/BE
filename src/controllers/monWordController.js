@@ -5,6 +5,7 @@ const StudentWord = require("../models/studentWord");
 const Student = require("../models/student");
 const { formatDate } = require("../utils/date");
 const { getUserIdFromToken } = require("../utils/auth");
+const { getLevelLabel } = require("../utils/level");
 const { Types } = require("mongoose");
 
 // [POST] 학생에게 오늘 단어 배정 (level)
@@ -21,7 +22,7 @@ exports.assignWordToStudent = async (req, res) => {
       return res.status(404).json({ message: "학생 정보가 없습니다." });
 
     // 회원의 level 값 (없으면 1로 기본 세팅)
-    const level = studentInfo.level || "씨앗";
+    const level = getLevelLabel(studentInfo.level);
     const today = new Date();
     const start = new Date(today.setHours(0, 0, 0, 0));
     const end = new Date(today.setHours(23, 59, 59, 999));
@@ -35,7 +36,7 @@ exports.assignWordToStudent = async (req, res) => {
     if (!docs.length) {
       return res
         .status(404)
-        .json({ message: `${dateStr}의 ${level} 레벨의 단어가 없습니다.` });
+        .json({ message: `${today}의 ${level} 레벨의 단어가 없습니다.` });
     }
 
     let student = await StudentWord.findOne({ studentId });
@@ -43,6 +44,7 @@ exports.assignWordToStudent = async (req, res) => {
       const wordList = docs.flatMap((d) =>
         d.words.map((w) => ({
           mwiId: w.mwiId,
+          category: w.category,
           word: w.word,
           meaning: w.meaning,
           practice: w.practice,
@@ -66,6 +68,7 @@ exports.assignWordToStudent = async (req, res) => {
         .filter((w) => !existIds.has(w.mwiId)) // 중복 제거
         .map((w) => ({
           mwiId: w.mwiId,
+          category: w.category,
           word: w.word,
           meaning: w.meaning,
           practice: w.practice || "",
@@ -155,9 +158,9 @@ exports.postWordItemUnderstand = async (req, res) => {
       { studentId, "wordList.mwiId": id },
       { $set: { "wordList.$.understand": true } }
     );
-    console.log(`ID ${id} 단어 이해 처리`, result);
+    // console.log(`ID ${id} 단어 이해 처리`, result);
 
-    if (result.matchedCount === 1)
+    if (result.modifiedCount === 0 && result.matchedCount === 1)
       return res.status(400).json({ message: "이미 이해 완료했습니다!" });
 
     if (result.modifiedCount === 0 && result.matchedCount === 0)
@@ -205,7 +208,7 @@ exports.postTodayMonWordDone = async (req, res) => {
       // 없으면 새로 생성
       progress = await Progress.create({
         studentId,
-        days: [{ day: today, tasks: { news: "done" } }],
+        days: [{ day: today, tasks: { word: "done" } }],
       });
     } else {
       // 오늘 날짜 데이터 확인
@@ -213,10 +216,10 @@ exports.postTodayMonWordDone = async (req, res) => {
         (d) => d.day.toISOString().split("T")[0] === today
       );
       if (!todayData) {
-        todayData = { day: today, tasks: { news: "done" } };
+        todayData = { day: today, tasks: { word: "done" } };
         progress.days.push(todayData);
       } else {
-        todayData.tasks.news = "done";
+        todayData.tasks.word = "done";
       }
       await progress.save();
     }
