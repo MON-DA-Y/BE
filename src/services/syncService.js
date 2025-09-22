@@ -3,6 +3,7 @@ const mysqlPool = require("../config/mysql");
 const DailyNews = require("../models/daily/dailyNews");
 const DailyWord = require("../models/daily/dailyWord");
 const DailyQuiz = require("../models/daily/dailyQuiz");
+const { SeriesKeyword, Series } = require("../models/syncSeries");
 
 // 뉴스 동기화
 async function syncDailyNewsForDate(dateStr) {
@@ -192,8 +193,91 @@ async function syncDailyQuizForDate(dateStr) {
   }
 }
 
+// 시리즈 키워드, 시리즈 동기화
+// 시리즈 키워드, 시리즈 동기화
+async function syncSeriesKeywords() {
+  const conn = await mysqlPool.getConnection();
+  try {
+    const [rows] = await conn.execute(`
+      SELECT kw_id AS kwId, main_keyword AS mainKeyword, input_at, update_at
+      FROM mon_series_main_keywords
+    `);
+
+    if (!rows.length) return { inserted: 0 };
+
+    const ops = rows.map((row) => ({
+      updateOne: {
+        filter: { kwId: row.kwId },
+        update: { $set: row },
+        upsert: true,
+      },
+    }));
+
+    return await SeriesKeyword.bulkWrite(ops);
+  } finally {
+    conn.release();
+  }
+}
+
+// 먼시리즈 + 기사 + 용어 동기화
+async function syncSeries() {
+  const conn = await mysqlPool.getConnection();
+  try {
+    // 시리즈
+    const [seriesRows] = await conn.execute(`
+      SELECT ms.ms_id AS msId, ms.kw_id AS kwId, ms.title, ms.subtitle, ms.input_at, ms.update_at,
+             o.img_url AS firstImageUrl
+      FROM mon_series ms
+      LEFT JOIN mon_series_articles msa ON ms.ms_id = msa.ms_id
+      LEFT JOIN org_article_tb o ON msa.oa_id = o.oa_id
+      GROUP BY ms.ms_id
+    `);
+
+    if (!seriesRows.length) return { inserted: 0 };
+
+    // 시리즈별 기사 가져오기
+    for (const s of seriesRows) {
+      const [articleRows] = await conn.execute(
+        `
+        SELECT msa_id AS msaId, ms_id AS msId, oa_id AS oaId, title, subtitle, main, summary, practice
+        FROM mon_series_articles
+        WHERE ms_id = ?
+        ORDER BY msa_id
+      `,
+        [s.msId]
+      );
+
+      // 각 기사별 용어 가져오기
+      for (const a of articleRows) {
+        const [wordRows] = await conn.execute(
+          `
+          SELECT msa_wi_id AS msaWiId, word, meaning
+          FROM mon_series_article_word_items
+          WHERE msa_id = ?
+          ORDER BY msa_wi_id
+        `,
+          [a.msaId]
+        );
+
+        a.wordItems = wordRows;
+      }
+
+      s.articles = articleRows;
+
+      // MongoDB upsert
+      await Series.updateOne({ msId: s.msId }, { $set: s }, { upsert: true });
+    }
+
+    return { inserted: seriesRows.length };
+  } finally {
+    conn.release();
+  }
+}
+
 module.exports = {
   syncDailyNewsForDate,
   syncDailyWordsForDate,
   syncDailyQuizForDate,
+  syncSeriesKeywords,
+  syncSeries,
 };
