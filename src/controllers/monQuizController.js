@@ -15,19 +15,16 @@ const { Weakness } = require("../models/weakness");
 exports.assignMonQuizToStudent = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student");
-    if (!studentId)
-      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+    if (!studentId) return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     const studentInfo = await Student.findById(studentId).select("-password");
-    if (!studentInfo)
-      return res.status(404).json({ message: "학생 정보가 없습니다." });
+    if (!studentInfo) return res.status(404).json({ message: "학생 정보가 없습니다." });
 
     const level = getLevelLabel(studentInfo.level);
     const today = formatDate(new Date());
 
     const quizzes = await DailyQuiz.find({ date: today, level }).lean();
-    if (!quizzes.length)
-      return res.status(404).json({ message: "오늘 배정할 퀴즈가 없습니다." });
+    if (!quizzes.length) return res.status(404).json({ message: "오늘 배정할 퀴즈가 없습니다." });
 
     let studentQuiz = await StudentQuiz.findOne({ studentId });
     if (!studentQuiz) {
@@ -104,15 +101,11 @@ exports.getTodayMonQuiz = async (req, res) => {
     const today = formatDate(new Date());
     const studentQuiz = await StudentQuiz.findOne({ studentId }).lean();
 
-    if (!studentQuiz)
-      return res.status(404).json({ message: "오늘 Mon 퀴즈가 없습니다." });
+    if (!studentQuiz) return res.status(404).json({ message: "오늘 Mon 퀴즈가 없습니다." });
 
-    const todayQuiz = studentQuiz.quizList.filter(
-      (q) => formatDate(q.assignedAt) === today
-    );
+    const todayQuiz = studentQuiz.quizList.filter((q) => formatDate(q.assignedAt) === today);
 
-    if (!todayQuiz.length)
-      return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
+    if (!todayQuiz.length) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
 
     res.json({
       result: todayQuiz.map((q) => ({
@@ -132,8 +125,7 @@ exports.getTodayMonQuiz = async (req, res) => {
 exports.postMonQuizSubmit = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student");
-    if (!studentId)
-      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+    if (!studentId) return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     const { selectedChoices } = req.body;
     const today = formatDate(new Date());
@@ -142,15 +134,11 @@ exports.postMonQuizSubmit = async (req, res) => {
       return res.status(400).json({ message: "선택한 답이 없습니다." });
 
     const studentQuiz = await StudentQuiz.findOne({ studentId });
-    if (!studentQuiz)
-      return res.status(404).json({ message: "Mon퀴즈가 없습니다." });
+    if (!studentQuiz) return res.status(404).json({ message: "Mon퀴즈가 없습니다." });
 
-    const todayQuiz = studentQuiz.quizList.filter(
-      (q) => formatDate(q.assignedAt) === today
-    );
+    const todayQuiz = studentQuiz.quizList.filter((q) => formatDate(q.assignedAt) === today);
 
-    if (!todayQuiz.length)
-      return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
+    if (!todayQuiz.length) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
 
     // 답 적용
     todayQuiz.forEach((q) => {
@@ -264,15 +252,13 @@ exports.postMonQuizSubmit = async (req, res) => {
 
     res.json({
       message: "오늘 Mon 퀴즈 제출 완료!",
-      result: todayQuiz.map(
-        ({ quizId, isCorrect, selectedAnswer, marking, answer }) => ({
-          id: quizId,
-          answer,
-          isCorrect,
-          selectedAnswer,
-          marking,
-        })
-      ),
+      result: todayQuiz.map(({ quizId, isCorrect, selectedAnswer, marking, answer }) => ({
+        id: quizId,
+        answer,
+        isCorrect,
+        selectedAnswer,
+        marking,
+      })),
     });
   } catch (err) {
     console.error(err);
@@ -287,29 +273,18 @@ exports.getTodayMonQuizMark = async (req, res) => {
     const today = formatDate(new Date());
 
     const studentQuiz = await StudentQuiz.findOne({ studentId }).lean();
-    if (!studentQuiz)
-      return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
+    if (!studentQuiz) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
 
     const todayQuiz = studentQuiz.quizList.filter(
       (q) => formatDate(q.assignedAt) === today && q.submit
     );
 
-    if (!todayQuiz.length)
-      return res.status(404).json({ message: "퀴즈를 제출하지 않았습니다." });
+    if (!todayQuiz.length) return res.status(404).json({ message: "퀴즈를 제출하지 않았습니다." });
 
     // quizzes 배열에서 필요한 필드만 뽑아서 response
     res.json({
       result: todayQuiz.map(
-        ({
-          quizId,
-          type,
-          question,
-          choices,
-          answer,
-          selectedAnswer,
-          marking,
-          isCorrect,
-        }) => ({
+        ({ quizId, type, question, choices, answer, selectedAnswer, marking, isCorrect }) => ({
           id: quizId,
           type,
           question,
@@ -360,30 +335,23 @@ exports.getTodayMonQuizMark = async (req, res) => {
 exports.getStudentSubmit = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student");
-    if (!studentId)
-      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+    if (!studentId) return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     const today = formatDate(new Date());
 
     const studentQuiz = await StudentQuiz.findOne({ studentId }).lean();
-    if (!studentQuiz)
-      return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
+    if (!studentQuiz) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
 
     // 오늘 퀴즈 필터링
-    const todayQuiz = studentQuiz.quizList.filter(
-      (q) => formatDate(q.assignedAt) === today
-    );
+    const todayQuiz = studentQuiz.quizList.filter((q) => formatDate(q.assignedAt) === today);
 
-    if (!todayQuiz.length)
-      return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
+    if (!todayQuiz.length) return res.status(404).json({ message: "오늘 Mon퀴즈가 없습니다." });
 
     const isSubmitted = todayQuiz.some((q) => q.submit === true);
 
     res.json({
       submit: isSubmitted,
-      message: isSubmitted
-        ? "오늘 Mon퀴즈 채점 확인 완료!"
-        : "퀴즈를 제출하지 않았습니다.",
+      message: isSubmitted ? "오늘 Mon퀴즈 채점 확인 완료!" : "퀴즈를 제출하지 않았습니다.",
     });
   } catch (err) {
     console.error(err);
@@ -395,29 +363,22 @@ exports.getStudentSubmit = async (req, res) => {
 exports.getMonQuizActive = async (req, res) => {
   try {
     const studentId = getUserIdFromToken(req, "student");
-    if (!studentId)
-      return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
+    if (!studentId) return res.status(401).json({ message: "인증되지 않은 사용자입니다." });
 
     const today = formatDate(new Date());
 
     // 오늘 할당된 뉴스 조회
     const studentNews = await StudentNews.findOne({ studentId }).lean();
     const todayNews =
-      studentNews?.newsList?.filter(
-        (item) => formatDate(item.assignedAt) === today
-      ) || [];
+      studentNews?.newsList?.filter((item) => formatDate(item.assignedAt) === today) || [];
 
     // 오늘 배정된 뉴스가 하나 이상이면 모두 완료여부 확인
-    const newsCompleted = todayNews.length
-      ? todayNews.every((n) => n.completed)
-      : false;
+    const newsCompleted = todayNews.length ? todayNews.every((n) => n.completed) : false;
 
     // 오늘 할당된 단어 조회
     const studentWord = await StudentWord.findOne({ studentId }).lean();
     const todayWords =
-      studentWord?.wordList?.filter(
-        (item) => formatDate(item.assignedAt) === today
-      ) || [];
+      studentWord?.wordList?.filter((item) => formatDate(item.assignedAt) === today) || [];
     const allWordsCompleted = todayWords.length
       ? todayWords.every((word) => word.completed)
       : false;

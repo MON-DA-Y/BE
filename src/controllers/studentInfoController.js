@@ -1,6 +1,5 @@
 const Student = require("../models/student");
 const { getUserIdFromToken } = require("../utils/auth");
-const Progress = require("../models/progress");
 
 // level 변환 함수
 const getLevelLabel = (level) => {
@@ -24,30 +23,6 @@ const getLevelLabel = (level) => {
   }
 };
 
-// strikeDay -> level 변환
-const getLevelByStrike = (strikeDay) => {
-  if (strikeDay >= 700) return 7;
-  if (strikeDay >= 365) return 6;
-  if (strikeDay >= 200) return 5;
-  if (strikeDay >= 100) return 4;
-  if (strikeDay >= 66) return 3;
-  if (strikeDay >= 21) return 2;
-  return 1;
-};
-
-// strikeDay 가져오기
-const getStrikeDay = async (studentId) => {
-  try {
-    const progress = await Progress.findOne({ studentId }).lean(); // lean() 쓰면 plain object
-    if (!progress) return null; // progress가 없으면 null 반환
-
-    return progress.strikeDay; // strikeDay 값 반환
-  } catch (err) {
-    console.error(err);
-    return null;
-  }
-};
-
 // [get] 학생 정보 조회
 exports.getStudentInfo = async (req, res) => {
   const studentId = getUserIdFromToken(req, "student"); // 테스트용 디폴트
@@ -55,11 +30,10 @@ exports.getStudentInfo = async (req, res) => {
   try {
     // DB에서 조회, 비밀번호 제외
     const student = await Student.findById(studentId).select("-password");
-    if (!student)
-      return res.status(404).json({ message: "학생 정보가 없습니다." });
+    if (!student) return res.status(404).json({ message: "학생 정보가 없습니다." });
 
     // 학생 레벨 (strikeDay 에 따른 )
-    const studentLevel = getLevelLabel(getLevelByStrike(getStrikeDay));
+    const studentLevel = getLevelLabel(student.level || 1);
 
     const responseStdInfo = {
       std_id: student.id,
@@ -85,8 +59,7 @@ exports.getStudentInfoById = async (req, res) => {
 
   try {
     const student = await Student.findById(studentId).select("-password");
-    if (!student)
-      return res.status(404).json({ message: "학생 정보가 없습니다." });
+    if (!student) return res.status(404).json({ message: "학생 정보가 없습니다." });
 
     const responseStdInfo = {
       std_id: student.id,
@@ -110,8 +83,7 @@ exports.getStudentByEmail = async (req, res) => {
   const { email } = req.query;
   try {
     const student = await Student.findOne({ email }).select("-password");
-    if (!student)
-      return res.status(404).json({ message: "학생을 찾을 수 없습니다." });
+    if (!student) return res.status(404).json({ message: "학생을 찾을 수 없습니다." });
 
     res.json({
       std_name: student.name,
