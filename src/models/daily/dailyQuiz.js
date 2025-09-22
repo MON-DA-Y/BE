@@ -16,9 +16,9 @@ const DailyQuizSchema = new mongoose.Schema({
   mnId: { type: Number, required: true }, // monNews.mn_id
   level: { type: String },
   category: { type: String },
-  quizzes: [QuizItemSchema],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  quizList: [QuizItemSchema],
 });
 
 // 오늘 날짜 + mqId 유니크
