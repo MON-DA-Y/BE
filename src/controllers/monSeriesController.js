@@ -1,3 +1,4 @@
+const { param } = require("../app");
 const StudentSeries = require("../models/studentSeries");
 const { Series, SeriesKeyword } = require("../models/syncSeries");
 const { getUserIdFromToken } = require("../utils/auth");
@@ -104,5 +105,65 @@ exports.assignSeriesPartToStudent = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "시리즈 파트 배정 실패" });
+  }
+};
+
+// [GET] 특정 시리즈의 특정 파트 조회
+exports.getSeriesPart = async (req, res) => {
+  try {
+    const msId = Number(req.params.seriesId); // 시리즈ID
+    const msaId = Number(req.params.partId); // 파트ID
+
+    // 시리즈 조회
+    const series = await Series.findOne({ msId }).lean();
+    if (!series) {
+      return res.status(404).json({ message: "시리즈를 찾을 수 없습니다." });
+    }
+
+    // 모든 파트(articles) 배열
+    const allParts = series.articles.map((a) => ({
+      id: a.msaId,
+      title: a.title,
+      subtitle: a.subtitle,
+      main: a.main,
+      summary: a.summary,
+      practice: a.practice,
+      wordItems: a.wordItems || [],
+    }));
+
+    // 요청한 파트만 추출
+    const part = allParts.find((a) => a.id === msaId);
+    if (!part) {
+      return res.status(404).json({ message: "파트를 찾을 수 없습니다." });
+    }
+
+    // 키워드 조회
+    const keywordDoc = await SeriesKeyword.findOne({
+      kwId: series.kwId,
+    }).lean();
+    const keyword = keywordDoc ? keywordDoc.mainKeyword : "";
+
+    return res.status(200).json({
+      result: {
+        msId: series.msId,
+        keyword: keyword,
+        title: series.title,
+        subtitle: series.subtitle,
+        series: series.articles.map((a) => ({
+          id: a.msaId,
+          title: a.title,
+          subtitle: a.subtitle,
+          main: a.main,
+          summary: a.summary,
+          practice: a.practice,
+          wordItems: a.wordItems || [],
+        })), // 전체 파트 배열
+        part: part, // 요청한 파트만
+      },
+      message: "시리즈 파트 조회 성공",
+    });
+  } catch (err) {
+    console.error("getSeriesPart 에러:", err);
+    return res.status(500).json({ message: "시리즈 파트 조회 실패" });
   }
 };
