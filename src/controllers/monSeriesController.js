@@ -80,7 +80,7 @@ exports.assignSeriesPartToStudent = async (req, res) => {
         studentId,
         msId: series.msId,
         title: series.title,
-        keyword: series.keyword,
+        // keyword: series.keyword,
         subtitle: series.subtitle,
         articles: [part],
       });
@@ -99,7 +99,7 @@ exports.assignSeriesPartToStudent = async (req, res) => {
         studentSeriesId: studentSeries._id,
         msId: series.msId,
         title: series.title,
-        keyword: series.keyword,
+        // keyword: series.keyword,
         subtitle: series.subtitle,
         articles: studentSeries.articles,
       },

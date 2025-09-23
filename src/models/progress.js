@@ -67,7 +67,8 @@ progressSchema.statics.updateWeekCompletionRate = async function (studentId) {
     completedTasks += tasks.filter((status) => status === "done").length;
   });
 
-  const weekCompletionRate = totalTasks === 0 ? 0 : (completedTasks / totalTasks) * 100;
+  const weekCompletionRate =
+    totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100 * 10) / 10;
 
   // DB 업데이트
   await this.updateOne({ studentId }, { $set: { weekCompletionRate } });
