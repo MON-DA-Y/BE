@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const serverless = require("serverless-http");
 const express = require("express");
 const cors = require("cors");
 
@@ -26,7 +27,7 @@ const app = express();
 
 // CORS 설정
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://mondayfe.netlify.app"], // 프론트엔드 주소
+  origin: "https://mondayfe.netlify.app", // 프론트엔드 주소
   method: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // 허용 HTTP 메서드
   allowedHeaders: ["Content-Type", "Authorization"], // 허용 헤더
 };
@@ -56,4 +57,4 @@ app.use("/api/login", logInRouter);
 app.use("/api/std", studentMainRouter);
 app.use("/api/monSeries", monSeriesRouter);
 
-module.exports = app;
+module.exports = serverless(app);
