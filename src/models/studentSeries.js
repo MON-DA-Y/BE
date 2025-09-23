@@ -15,7 +15,7 @@ const StudentSeriesArticleSchema = new mongoose.Schema({
 const StudentSeriesSchema = new mongoose.Schema({
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: "Student" },
   msId: Number,
-  keyword: String,
+  //keyword: String,
   title: String,
   subtitle: String,
   articles: [StudentSeriesArticleSchema],

@@ -1,6 +1,6 @@
 const { getUserIdFromToken } = require("../utils/auth");
 const { getWeekRange } = require("../utils/week");
-const { getLatestSummary, Weakness } = require("../models/weakness");
+const { getLatestSummary } = require("../models/weakness");
 
 const DummyWeakness = {
   findOne: async ({ studentId }) => {
@@ -11,11 +11,11 @@ const DummyWeakness = {
         {
           date: "2025-09-22", // 퀴즈 보고 다음주의 시작일 !
           categories: [
-            { category: "MONEY", total: 10, correct: 7 },
-            { category: "GLOBAL", total: 5, correct: 4 },
-            { category: "BIGPICTURE", total: 8, correct: 3 },
-            { category: "ISSUES", total: 7, correct: 3 },
-            { category: "TECH", total: 7, correct: 3 },
+            { category: "cg00", total: 10, correct: 7 },
+            { category: "cg02", total: 5, correct: 4 },
+            { category: "cg04", total: 8, correct: 3 },
+            { category: "cg07", total: 7, correct: 3 },
+            { category: "cg01", total: 7, correct: 3 },
           ],
           summary_words:
             "특히 거시경제와 정책/이슈에서 틀린 개수가 많아요. 이번 주에는 이 두 분야를 집중적으로 학습하면 좋겠어요!",
@@ -25,10 +25,10 @@ const DummyWeakness = {
         {
           date: "2025-09-22",
           categories: [
-            { category: "TECH", total: 10, correct: 7 },
-            { category: "GLOBAL", total: 5, correct: 4 },
-            { category: "BIGPICTURE", total: 8, correct: 5 },
-            { category: "ISSUES", total: 7, correct: 5 },
+            { category: "cg00", total: 10, correct: 7 },
+            { category: "cg02", total: 5, correct: 4 },
+            { category: "cg05", total: 8, correct: 5 },
+            { category: "cg06", total: 7, correct: 5 },
           ],
           summary_news:
             "특히 거시경제와 정책/이슈에서 틀린 개수가 많아요. 이번 주에는 이 두 분야를 집중적으로 학습하면 좋겠어요!",
@@ -43,7 +43,7 @@ exports.getWeaknessByWeek = async (req, res) => {
   const weekQuery = req.query.week;
 
   try {
-    const weakness = await Weakness.findOne({ studentId });
+    const weakness = await DummyWeakness.findOne({ studentId });
     if (!weakness) return res.json({ weakWord: null, weakNews: null });
 
     function formatKSTDate(date) {
@@ -70,18 +70,19 @@ exports.getWeaknessByWeek = async (req, res) => {
       : [];
 
     // MySQL에서 최신 summary 조회
-    const summary = await getLatestSummary(studentId);
+    // const summary = await getLatestSummary(studentId);
 
     res.json({
       weakWord: {
         date: weekStartStr,
         categories: filteredWordCategories,
-        summary_words: summary.summary_words || null,
+        summary_words: weekWeakWord ? weekWeakWord.summary_words : null,
       },
       weakNews: {
         date: weekStartStr,
         categories: filteredNewsCategories,
-        summary_news: summary.summary_news || null,
+        // summary_news: summary.summary_news || null,
+        summary_news: weekWeakNews ? weekWeakNews.summary_news : null,
       },
     });
   } catch (err) {
@@ -96,7 +97,7 @@ exports.getStudentWeakness = async (req, res) => {
   const weekQuery = req.query.week;
 
   try {
-    const weakness = await Weakness.findOne({ studentId: studentId });
+    const weakness = await DummyWeakness.findOne({ studentId: studentId });
     if (!weakness) return res.json({ weakWord: null, weakNews: null });
 
     function formatKSTDate(date) {
@@ -129,12 +130,13 @@ exports.getStudentWeakness = async (req, res) => {
       weakWord: {
         date: weekStartStr,
         categories: filteredWordCategories,
-        summary_words: summary.summary_words || null,
+        summary_words: weekWeakWord ? weekWeakWord.summary_words : null,
       },
       weakNews: {
         date: weekStartStr,
         categories: filteredNewsCategories,
-        summary_news: summary.summary_news || null,
+        // summary_news: summary.summary_news || null,
+        summary_news: weekWeakNews ? weekWeakNews.summary_news : null,
       },
     });
   } catch (err) {
