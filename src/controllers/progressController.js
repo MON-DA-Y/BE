@@ -59,7 +59,11 @@ exports.getParentProgress = async (req, res) => {
 
     const progress = await Progress.findOne({ studentId });
     if (!progress) {
-      return res.status(404).json({ message: "학생 progress 데이터가 없습니다." });
+      return res.json({
+        weekCompletionRate: 0,
+        strikeDay: 0,
+        days: [],
+      });
     }
 
     const progressInWeek = progress.days.filter((n) => {
