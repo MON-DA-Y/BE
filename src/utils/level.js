@@ -1,4 +1,4 @@
-export const getLevelLabel = (level) => {
+const getLevelLabel = (level) => {
   switch (level) {
     case 1:
       return "씨앗";
@@ -18,3 +18,5 @@ export const getLevelLabel = (level) => {
       return "씨앗";
   }
 };
+
+module.exports = {getLevelLabel};                                  
