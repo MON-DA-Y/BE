@@ -26,7 +26,7 @@ const app = express();
 
 // CORS 설정
 const corsOptions = {
-  origin: "http://localhost:3000", // 프론트엔드 주소
+	origin: ["http://localhost:3000", "https://monday.it.kr", "https://monday-fe.vercel.app"] // 프론트엔드 주소
   method: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // 허용 HTTP 메서드
   allowedHeaders: ["Content-Type", "Authorization"], // 허용 헤더
 };
