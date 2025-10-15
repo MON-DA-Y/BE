@@ -9,7 +9,7 @@ const DummyWeakness = {
       studentId,
       weakWord: [
         {
-          date: "2025-09-22", // 퀴즈 보고 다음주의 시작일 !
+          date: "2025-10-13", // 퀴즈 보고 다음주의 시작일 !
           categories: [
             { category: "cg00", total: 10, correct: 7 },
             { category: "cg02", total: 5, correct: 4 },
@@ -23,7 +23,7 @@ const DummyWeakness = {
       ],
       weakNews: [
         {
-          date: "2025-09-22",
+          date: "2025-10-13",
           categories: [
             { category: "cg00", total: 10, correct: 7 },
             { category: "cg02", total: 5, correct: 4 },
